@@ -3,6 +3,12 @@ import os
 
 from datetime import datetime
 
+def set_debug_mode(enabled: bool = True) -> None:
+    os.environ['DEBUG'] = 'true' if enabled else 'false'
+
+def get_debug_mode() -> bool:
+    return os.getenv('DEBUG', 'False').lower() == 'true'
+
 def setup_logger(name: str = __name__, log_dir: str = 'logs') -> logging.Logger:
     """
     Description: 로거를 설정하고 반환합니다.
@@ -13,8 +19,10 @@ def setup_logger(name: str = __name__, log_dir: str = 'logs') -> logging.Logger:
     
     Returns: 설정된 Logger 객체
     """
+    # 디버그 설정
+    set_debug_mode(True);
     # 디버그 모드 확인 (환경 변수만 확인)
-    debug = os.getenv('DEBUG', 'False').lower() == 'true'
+    debug = get_debug_mode()
 
     # 로그 레벨 설정
     log_level = logging.DEBUG if debug else logging.INFO

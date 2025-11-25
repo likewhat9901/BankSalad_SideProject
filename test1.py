@@ -7,7 +7,7 @@ from logger import setup_logger
 logger = setup_logger(__name__)
 
 SOURCE = Path("data/가계부_데이터_저장용.parquet")
-TARGET = Path("data/커피간식.parquet")
+TARGET = Path("parse/커피간식.parquet")
 
 def main():
     df = pd.read_parquet(SOURCE)
