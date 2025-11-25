@@ -7,9 +7,9 @@
 
 ## 프로젝트 개발 원칙
 0. **개발 원칙**
-  - Think Why
-  - Make Simple
-  - Do Automize
+  - Think Why (왜 만들어야 하는지?)
+  - Make Simple (최대한 단순하게)
+  - Do Automize (최대한 자동화)
 
 2. **로깅 우선**
   - 모든 작업은 로그로 기록
@@ -47,4 +47,5 @@
 
 ## 설정값
 - 
+
 
