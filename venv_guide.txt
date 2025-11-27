@@ -1,5 +1,6 @@
 # Windows, CMD 기준
 
+--- CMD ---
 1. 파이썬 설치
 https://www.python.org/downloads/windows/
 Python 3.13.9 권장
@@ -9,6 +10,7 @@ python --version 으로 설치 확인
 2. 가상환경 생성
 python -m venv venv
 
+--- 가상환경 ---
 3. 가상환경 활성화
 가상환경이 생성된 위치에서
 [가상환경명]\Scripts\activate
@@ -25,3 +27,8 @@ deactivate
 
 7. 저장된 패키지 다운로드
 pip install -r requirements.txt
+
+8. FastAPI 서버 실행
+uvicorn app.main:app --reload   → 브라우저에서 http://127.0.0.1:8000 접속 가능
+    * uvicorn : ASGI 서버 (FastAPI 실행기)
+    * --reload : 코드 변경 시 자동 재시작 (개발용)
