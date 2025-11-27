@@ -1,0 +1,27 @@
+# Windows, CMD 기준
+
+1. 파이썬 설치
+https://www.python.org/downloads/windows/
+Python 3.13.9 권장
+
+python --version 으로 설치 확인
+
+2. 가상환경 생성
+python -m venv venv
+
+3. 가상환경 활성화
+가상환경이 생성된 위치에서
+[가상환경명]\Scripts\activate
+ex. venv\Scripts\activate
+
+4. 패키지 설치
+pip install pandas openpyxl pyarrow fastapi uvicorn python-multipart
+
+5. 패키지 저장
+pip freeze > requirements.txt
+
+6. 나가기 or 비활성화
+deactivate
+
+7. 저장된 패키지 다운로드
+pip install -r requirements.txt

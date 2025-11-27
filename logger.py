@@ -3,24 +3,26 @@ import os
 
 from datetime import datetime
 
+from config import LOG_DIR
+
 def set_debug_mode(enabled: bool = True) -> None:
     os.environ['DEBUG'] = 'true' if enabled else 'false'
 
 def get_debug_mode() -> bool:
     return os.getenv('DEBUG', 'False').lower() == 'true'
 
-def setup_logger(name: str = __name__, log_dir: str = 'logs') -> logging.Logger:
+def setup_logger(name: str = __name__) -> logging.Logger:
     """
     Description: 로거를 설정하고 반환합니다.
     
     Parameters:
         name: 로거 이름 (보통 __name__ 사용)
-        log_dir: 로그 파일을 저장할 디렉토리
     
     Returns: 설정된 Logger 객체
     """
-    # 디버그 설정
-    set_debug_mode(True);
+    # 디버그 설정 (개발자 용, 실제 배포 시 False로 설정)
+    set_debug_mode(True)
+    
     # 디버그 모드 확인 (환경 변수만 확인)
     debug = get_debug_mode()
 
@@ -28,16 +30,13 @@ def setup_logger(name: str = __name__, log_dir: str = 'logs') -> logging.Logger:
     log_level = logging.DEBUG if debug else logging.INFO
 
     # 로그 디렉토리 생성
-    os.makedirs(log_dir, exist_ok=True)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
     
     # 로그 파일명 생성 (타임스탬프 포함)
-    log_filename = os.path.join(
-        log_dir, 
-        f'log_{datetime.now().strftime("%Y%m%d")}.log'
-    )
+    log_filename = LOG_DIR / f'log_{datetime.now().strftime("%Y%m%d")}.log'
 
     # 파일이 새로 생성되는지 확인
-    is_new_file = not os.path.exists(log_filename)
+    is_new_file = not log_filename.exists()
     
     # 로거 생성
     logger = logging.getLogger(name)
@@ -69,7 +68,7 @@ def setup_logger(name: str = __name__, log_dir: str = 'logs') -> logging.Logger:
 
     # 로그 파일 생성 정보 기록
     if is_new_file:
-        logger.info(f"로그 파일이 생성되었습니다: {os.path.abspath(log_filename)}")
+        logger.info(f"로그 파일이 생성되었습니다: {log_filename}")
 
     # 디버그 모드 확인
     if debug:
