@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # === 프로젝트 이름 ===
-PROJECT_NAME = "banksalad"
+PROJECT_NAME = "BankSalad_SideProject"
 
 # === 루트 디렉토리 경로 ===
 BASE_DIR = Path(__file__).parent

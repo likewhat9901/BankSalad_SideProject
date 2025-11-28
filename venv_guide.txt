@@ -9,6 +9,7 @@ python --version 으로 설치 확인
 
 2. 가상환경 생성
 python -m venv venv
+py -m venv venv
 
 --- 가상환경 ---
 3. 가상환경 활성화
@@ -18,17 +19,27 @@ ex. venv\Scripts\activate
 
 4. 패키지 설치
 pip install pandas openpyxl pyarrow fastapi uvicorn python-multipart
+or
+pip install -r requirements.txt (저장된 패키지 다운로드)
 
 5. 패키지 저장
 pip freeze > requirements.txt
 
-6. 나가기 or 비활성화
-deactivate
+6. FastAPI 서버 실행
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    → 로컬: http://127.0.0.1:8000
+    → 다른 컴퓨터: http://[서버IP주소]:8000
+    * --host 0.0.0.0 : 모든 네트워크 인터페이스에서 접근 허용
+    * --reload : 코드 변경 시 자동 재시작 (개발용)
+* 방화벽 설정 필요
+PowerShell 관리자 권한으로 실행. 다음 코드 입력하고 실행
+New-NetFirewallRule -DisplayName "FastAPI Server" -Direction Inbound -LocalPort 8000 -Protocol TCP -Action Allow
 
-7. 저장된 패키지 다운로드
+
+
+
+98. 저장된 패키지 다운로드
 pip install -r requirements.txt
 
-8. FastAPI 서버 실행
-uvicorn app.main:app --reload   → 브라우저에서 http://127.0.0.1:8000 접속 가능
-    * uvicorn : ASGI 서버 (FastAPI 실행기)
-    * --reload : 코드 변경 시 자동 재시작 (개발용)
+99. 나가기 or 비활성화
+deactivate
