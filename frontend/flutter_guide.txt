@@ -1,0 +1,48 @@
+
+1. Flutter SDK 설치
+  https://docs.flutter.dev/install/archive
+
+2. Flutter 환경변수 설정
+  원하는 곳에 zip 파일 압축풀기
+  시스템 변수 or 사용자 변수 Path 에 경로 추가 (ex. C:\00DevelopKits\flutter\bin)
+  CMD 새로 열어서 확인
+  flutter --version
+
+3. Flutter 동작 확인
+  flutter doctor 실행
+  <문제>
+  [!] Android toolchain - develop for Android devices (Android SDK version 36.1.0)
+      X cmdline-tools component is missing.
+        <해결>
+        Android Studio 실행해서 SDK Manager 로 이동
+        Android SDK 에서 SDK Tools 탭을 선택
+        목록에서 Android SDK Command-line Tools (latest) 항목을 체크하고 Apply
+      X Android license status unknown.
+        <해결>
+        flutter doctor --android-licenses 실행
+  [X] Visual Studio - develop Windows apps    -> Windows 데스크톱 앱 개발에만 필요
+      X Visual Studio not installed; this is necessary to develop Windows apps.
+
+4. Flutter 프로젝트 생성
+  <현재 폴더에 생성>
+  flutter create .
+  <상위 폴더에서 생성>
+  flutter create [Project_Name]
+
+5. Flutter 의존성 다운로드
+  flutter pub get
+
+6. FLutter 앱 빌드, 실행
+  flutter run
+
+*애뮬레이터로 실행하고 싶다면
+  flutter emulators   -> 사용가능한 애뮬레이터 목록 확인
+  flutter emulators --launch [emulator Id]   -> 애뮬레이터 실행
+  ex. flutter emulators --launch Pixel_6_API_33
+  flutter run
+
+7. Hot Reload / Hot Restart 단축키
+  앱이 실행 중인 터미널에서:
+  r   Hot Reload    UI 변경사항만 즉시 반영 (상태 유지)
+  R	  Hot Restart	  앱 전체 재시작 (상태 초기화)
+  q	  종료           앱 종료

@@ -1,0 +1,106 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+# .vscode/  # 필요시 주석 해제
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+pubspec.lock  # 패키지 앱은 제외, 라이브러리는 포함 권장
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Android related
+/android/.gradle/
+/android/captures/
+/android/gradlew
+/android/gradlew.bat
+/android/local.properties
+/android/**/GeneratedPluginRegistrant.java
+/android/key.properties
+*.jks
+
+# iOS/XCode related
+/ios/.generated/
+/ios/Flutter/App.framework
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Flutter.podspec
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/ephemeral
+/ios/Flutter/app.flx
+/ios/Flutter/app.zip
+/ios/Flutter/flutter_assets/
+/ios/Flutter/flutter_export_environment.sh
+/ios/ServiceDefinitions.json
+/ios/Runner/GeneratedPluginRegistrant.*
+/ios/Pods/
+/ios/.symlinks/
+/ios/Podfile.lock
+
+# macOS related
+/macos/Flutter/ephemeral/
+/macos/Pods/
+/macos/.symlinks/
+
+# Windows related
+/windows/flutter/ephemeral/
+
+# Linux related
+/linux/flutter/ephemeral/
+
+# Web related
+/web/.dart_tool/
+
+# Exceptions to above rules
+!**/ios/**/default.mode1v3
+!**/ios/**/default.mode2v3
+!**/ios/**/default.pbxuser
+!**/ios/**/default.perspectivev3
+
+# Environment files (중요한 설정 파일)
+.env
+.env.*
+*.env
+
+# Firebase (사용시)
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+
+# 기타 민감한 파일
+secrets.dart
+**/secrets/
