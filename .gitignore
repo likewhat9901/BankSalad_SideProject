@@ -1,0 +1,103 @@
+# ========================== 공통 ==========================
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+# 환경 파일
+.env
+.env.*
+
+# ========================== Backend ==========================
+/backend/venv/
+/backend/data/
+/backend/logs/
+/backend/parse/
+/backend/resData/
+
+# ========================== Frontend (Flutter) ==========================
+# Dart/Flutter 빌드
+/frontend/.dart_tool/
+/frontend/.flutter-plugins
+/frontend/.flutter-plugins-dependencies
+/frontend/.pub-cache/
+/frontend/.pub/
+/frontend/build/
+/frontend/coverage/
+/frontend/**/doc/api/
+
+# pubspec.lock - 앱 프로젝트는 보통 제외
+# /frontend/pubspec.lock
+
+# Android related
+/frontend/android/.gradle/
+/frontend/android/captures/
+/frontend/android/gradlew
+/frontend/android/gradlew.bat
+/frontend/android/local.properties
+/frontend/android/**/GeneratedPluginRegistrant.java
+/frontend/android/key.properties
+/frontend/android/app/debug
+/frontend/android/app/profile
+/frontend/android/app/release
+*.jks
+
+# iOS/XCode related
+/frontend/ios/.generated/
+/frontend/ios/Flutter/App.framework
+/frontend/ios/Flutter/Flutter.framework
+/frontend/ios/Flutter/Flutter.podspec
+/frontend/ios/Flutter/Generated.xcconfig
+/frontend/ios/Flutter/ephemeral/
+/frontend/ios/Flutter/app.flx
+/frontend/ios/Flutter/app.zip
+/frontend/ios/Flutter/flutter_assets/
+/frontend/ios/Flutter/flutter_export_environment.sh
+/frontend/ios/Flutter/.last_build_id
+/frontend/ios/ServiceDefinitions.json
+/frontend/ios/Runner/GeneratedPluginRegistrant.*
+/frontend/ios/Pods/
+/frontend/ios/.symlinks/
+/frontend/ios/Podfile.lock
+
+# macOS related
+/frontend/macos/Flutter/ephemeral/
+/frontend/macos/Pods/
+/frontend/macos/.symlinks/
+
+# Windows related
+/frontend/windows/flutter/ephemeral/
+
+# Linux related
+/frontend/linux/flutter/ephemeral/
+
+# Web related
+/frontend/web/.dart_tool/
+
+# Miscellaneous
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# Symbolication & Obfuscation
+app.*.symbols
+app.*.map.json
+
+# Firebase (사용시)
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+
+# 기타 민감한 파일
+secrets.dart
+**/secrets/
