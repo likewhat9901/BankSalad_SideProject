@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../widgets/excel_upload_button.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidget
   const HomeScreen({super.key});
 
   @override
@@ -26,6 +27,8 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text('하단 탭에서 거래내역을 확인하세요'),
+            const SizedBox(height: 32),
+            const ExcelUploadButton(),  // 공통 위젯 사용
           ],
         ),
       ),

@@ -36,9 +36,9 @@
   flutter run
 
 *애뮬레이터로 실행하고 싶다면
-  flutter emulators   -> 사용가능한 애뮬레이터 목록 확인
-  flutter emulators --launch [emulator Id]   -> 애뮬레이터 실행
-  ex. flutter emulators --launch Pixel_6_API_33
+  flutter emulators                           -> 사용가능한 애뮬레이터 목록 확인
+  flutter emulators --launch [emulator Id]    -> 애뮬레이터 실행
+    ex. flutter emulators --launch Pixel_6_API_33
   flutter run
 
 7. Hot Reload / Hot Restart 단축키
@@ -46,3 +46,20 @@
   r   Hot Reload    UI 변경사항만 즉시 반영 (상태 유지)
   R	  Hot Restart	  앱 전체 재시작 (상태 초기화)
   q	  종료           앱 종료
+
+
+
+
+
+98. Flutter 테스트
+  # 평소 개발 (로그 확인)
+  flutter run
+
+  # 최종 배포 테스트 (로그 안 보임)
+  flutter run --release
+
+99. Flutter 앱 실행 명령어
+      명령어	              모드	        용도
+  flutter run	            Debug	    개발용 (기본값)
+  flutter run --release	  Release   최종 앱처럼 테스트
+  flutter run --profile	  Profile	  성능 측정용

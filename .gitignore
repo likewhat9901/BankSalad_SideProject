@@ -24,41 +24,17 @@ __pycache__/
 # ========================== Frontend (Flutter) ==========================
 # Dart/Flutter
 /frontend/.dart_tool/
-/frontend/.flutter-plugins
-/frontend/.flutter-plugins-dependencies
-/frontend/.pub-cache/
-/frontend/.pub/
 /frontend/build/
-/frontend/coverage/
+/frontend/.metadata
+/frontend/.flutter-plugins-dependencies
 
 # Android
 /frontend/android/.gradle/
 /frontend/android/local.properties
 /frontend/android/key.properties
-/frontend/android/app/debug
-/frontend/android/app/profile
-/frontend/android/app/release
 *.jks
-
-# iOS (나중을 위해 유지)
-/frontend/ios/Pods/
-/frontend/ios/Podfile.lock
-/frontend/ios/.symlinks/
-/frontend/ios/Flutter/ephemeral/
-/frontend/ios/Runner/GeneratedPluginRegistrant.*
-
-# Platform ephemeral
-/frontend/macos/Flutter/ephemeral/
-/frontend/windows/flutter/ephemeral/
-/frontend/linux/flutter/ephemeral/
 
 # Misc
 .DS_Store
 app.*.symbols
 app.*.map.json
-
-# 민감한 파일
-secrets.dart
-**/secrets/
-google-services.json
-GoogleService-Info.plist

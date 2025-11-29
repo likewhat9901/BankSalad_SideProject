@@ -10,6 +10,7 @@ upload_router = APIRouter(prefix="/upload", tags=["업로드"])
 @upload_router.post("/excel")
 async def upload_excel(file: UploadFile = File(...)):
     """엑셀 파일 업로드 및 변환"""
+    logger.info(f"파일 업로드 요청: {file.filename}")
     try:
         excel_file_path = RES_DATA_DIR / file.filename
         with open(excel_file_path, "wb") as f:
@@ -17,6 +18,7 @@ async def upload_excel(file: UploadFile = File(...)):
             f.write(content)
         
         result = convert_excel_to_parquet(excel_file_path)
+        logger.info(f"파일 업로드 성공: {file.filename}")
         return result
     except Exception as e:
         logger.error(f"업로드 실패: {str(e)}")

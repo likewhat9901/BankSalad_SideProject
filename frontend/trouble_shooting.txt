@@ -1,0 +1,25 @@
+0. 양식
+    <이유>
+
+    <해결>
+
+1. flutter run --release 시, Android에서 HTTP 통신이 차단
+    <이유>
+    Android 9(API 28) 이상에서는 HTTP(암호화되지 않은) 연결이 기본적으로 차단되기 때문이다.
+    <해결>
+    android/app/src/main/AndroidManifest.xml 수정
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+            <!-- 인터넷 권한 추가 -->
+            <uses-permission android:name="android.permission.INTERNET"/>
+            
+            <application
+                android:label="frontend"
+                android:name="${applicationName}"
+                android:icon="@mipmap/ic_launcher"
+                android:usesCleartextTraffic="true">  <!-- 이 줄 추가! -->
+                
+                <!-- ... 나머지 동일 ... -->
+            </application>
+        </manifest>
+
+2. 
