@@ -1,0 +1,48 @@
+# Windows, CMD 기준
+
+--------- CMD ---------
+1. 파이썬 설치
+    https://www.python.org/downloads/windows/
+    Python 3.13.9 권장
+
+    python --version 으로 설치 확인
+
+2. 가상환경 생성
+    python -m venv venv
+    py -m venv venv
+
+--------- 가상환경 ---------
+3. 가상환경 활성화
+    가상환경이 생성된 위치에서
+    [가상환경명]\Scripts\activate
+    ex. venv\Scripts\activate
+
+4. 패키지 설치
+    pip install pandas openpyxl pyarrow fastapi uvicorn python-multipart
+    or
+    pip install -r requirements.txt (저장된 패키지 다운로드)
+
+5. 패키지 저장 & 업데이트
+    pip freeze > requirements.txt
+
+6. FastAPI 서버 실행
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+        → 로컬: http://127.0.0.1:8000
+        → 다른 컴퓨터: http://[서버IP주소]:8000
+        * --host 0.0.0.0 : 모든 네트워크 인터페이스에서 접근 허용
+        * --reload : 코드 변경 시 자동 재시작 (개발용)
+    * 방화벽 설정 필요
+    PowerShell 관리자 권한으로 실행. 다음 코드 입력하고 실행
+    New-NetFirewallRule -DisplayName "FastAPI Server" -Direction Inbound -LocalPort 8000 -Protocol TCP -Action Allow
+
+
+97. Cursor/VS Code에 venv를 기본 Python 환경으로 설정하기
+    Ctrl + Shift + P 누르기
+    Python: Select Interpreter 입력 후 선택
+    목록에서 venv 경로 선택 (.\venv\Scripts\python.exe)
+
+98. 저장된 패키지 다운로드
+    pip install -r requirements.txt
+
+99. 나가기 or 비활성화
+    deactivate
