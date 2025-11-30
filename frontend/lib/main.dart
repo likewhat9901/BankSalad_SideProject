@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'screens/transactions_screen.dart';
+import 'screens/overspending_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -42,6 +43,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   final List<Widget> _screens = const [
     HomeScreen(),
     TransactionsScreen(),
+    OverspendingScreen(),
   ];
 
   @override
@@ -65,6 +67,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
             label: '거래내역',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.trending_up_outlined),
+            selectedIcon: Icon(Icons.trending_up),
+            label: '과소비 분석',
           ),
         ],
       ),

@@ -20,7 +20,7 @@ def get_transactions(
     # 파일이 없으면 빈 배열 반환
     if not PARQUET_PATH.exists():
         logger.warning(f"파일 없음: {PARQUET_PATH} - 빈 배열 반환")
-        return []
+        return [], 0
 
     try:
         df = pd.read_parquet(PARQUET_PATH)

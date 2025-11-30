@@ -32,7 +32,7 @@ class ApiService {
         throw Exception('파일 업로드 실패: ${response.statusCode}');
       }
     } catch (e, stackTrace) {
-      LoggerService.error('❌ 업로드 오류', e, stackTrace);
+      LoggerService.error('업로드 오류', e, stackTrace);
       rethrow;
     }
   }
@@ -60,7 +60,12 @@ class ApiService {
     LoggerService.debug('요청 파라미터: $queryParams');
     
     try {
-      final response = await http.get(uri);
+      final response = await http.get(uri).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('서버 응답 시간 초과');
+        },
+      );
       
       // 🔹 응답 상태 로그
       LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
@@ -82,14 +87,14 @@ class ApiService {
       };
       } else {
         // 🔹 HTTP 에러 로그
-        LoggerService.warning('⚠️ API 오류 응답: ${response.statusCode}');
+        LoggerService.warning('API 오류 응답: ${response.statusCode}');
         LoggerService.debug('응답 본문: ${response.body}');
         
         throw Exception('거래내역을 불러오는데 실패했습니다: ${response.statusCode}');
       }
     } catch (e, stackTrace) {
       // 🔹 예외 발생 로그 (네트워크 오류 등)
-      LoggerService.error('❌ API 호출 실패: $uri', e, stackTrace);
+      LoggerService.error('API 호출 실패: $uri', e, stackTrace);
       rethrow;
     }
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/excel_upload_button.dart';
+import '../services/app_launcher_service.dart';
 
 class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidget
   const HomeScreen({super.key});
@@ -28,7 +28,13 @@ class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidge
             const SizedBox(height: 8),
             const Text('하단 탭에서 거래내역을 확인하세요'),
             const SizedBox(height: 32),
-            const ExcelUploadButton(),  // 공통 위젯 사용
+            ElevatedButton(
+              onPressed: () async {
+                await AppLauncherService.openBankSalad();
+                // 패키지가 알아서 처리함 (앱 없으면 스토어로)
+              },
+              child: const Text('뱅크샐러드 열기'),
+            )
           ],
         ),
       ),

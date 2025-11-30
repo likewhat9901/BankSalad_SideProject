@@ -25,8 +25,3 @@ def get_transactions(
         "total_count": total_count,  # 전체 개수 (더 불러올 데이터가 있는지 판단용)
         "has_more": offset + len(data) < total_count
     }
-
-@transactions_router.get("/search")
-def search_transactions(keyword: str):
-    """거래내역 검색"""
-    return {"results": [...]}
