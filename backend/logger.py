@@ -20,7 +20,7 @@ def setup_logger(name: str = __name__) -> logging.Logger:
     
     Returns: 설정된 Logger 객체
     """
-    # 디버그 설정 (개발자 용, 실제 배포 시 False로 설정)
+    # 디버그 설정 (개발자 용, 실제 배포 시 삭제) (TODO)
     set_debug_mode(True)
     
     # 디버그 모드 확인 (환경 변수만 확인)

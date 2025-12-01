@@ -1,11 +1,10 @@
 import pandas as pd
-from config import DATA_DIR
+from config import get_parquet_path
 
 from logger import setup_logger
+
+
 logger = setup_logger(__name__)
-
-
-PARQUET_PATH = DATA_DIR / "test_excel_file.parquet"
 
 def get_transactions(
     limit: int,
@@ -15,15 +14,16 @@ def get_transactions(
     end_date: str | None
 ) -> tuple[list[dict], int]:
     """거래내역 조회"""
+    parquet_path = get_parquet_path()
+
     logger.info(f"거래내역 조회 요청 - limit: {limit}, offset: {offset}, category: {category}, start_date: {start_date}, end_date: {end_date}")
     
-    # 파일이 없으면 빈 배열 반환
-    if not PARQUET_PATH.exists():
-        logger.warning(f"파일 없음: {PARQUET_PATH} - 빈 배열 반환")
+    if not parquet_path.exists():
+        logger.warning(f"파일 없음: {parquet_path} - 빈 배열 반환")
         return [], 0
 
     try:
-        df = pd.read_parquet(PARQUET_PATH)
+        df = pd.read_parquet(parquet_path)
         
         if category:
             df = df[df["대분류"] == category]
@@ -41,9 +41,6 @@ def get_transactions(
         logger.info(f"거래내역 조회 완료 - 전체: {total_count}건, 반환: {len(df)}건")
         return df.to_dict(orient="records"), total_count
 
-    except FileNotFoundError:
-        logger.error(f"파일 없음: {PARQUET_PATH}")
-        raise
     except Exception as e:
         logger.error(f"거래내역 조회 실패: {e}")
         raise

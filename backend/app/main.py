@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse
 from app.routers.upload import upload_router
 from app.routers.analysis import analysis_router
 from app.routers.transactions import transactions_router
+from app.routers.stats import stats_router
 
 
 app = FastAPI(
@@ -26,7 +27,7 @@ app.add_middleware(
 app.include_router(upload_router)
 app.include_router(analysis_router)
 app.include_router(transactions_router)
-
+app.include_router(stats_router)
 
 # 경로 핸들러
 @app.get("/", response_class=HTMLResponse)
