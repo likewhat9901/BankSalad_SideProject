@@ -33,7 +33,7 @@
 
 
 ## API별 흐름
-0. flowchart LR
+flowchart LR
     A[Flutter] --> B[main.py]
 
     B -->|POST /upload/excel| C[upload.py]
