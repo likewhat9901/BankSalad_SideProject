@@ -22,40 +22,37 @@
     └── venv_guide.txt                      # 가상환경 가이드
 
 
-## 필요한 추가 모듈 (표준 라이브러리 외)
-    - pandas    : 데이터 처리
-    - openpyxl  : 엑셀 파일 읽기
-    - pyarrow   : Parquet 파일 처리
-
-
-## 엑셀 파일 형식
-    필수 컬럼: 날짜(ms timestamp), 시간(문자열), 대분류, 금액
-
-
 ## API별 흐름
 ```mermaid
 flowchart LR
-    A[Flutter] --> B[main.py]
+    A[Flutter] <--> B[main.py]
 
-    B -->|POST /upload/excel| C[upload.py]
-    B -->|GET /transactions| D[transactions.py]
-    B -->|GET /analysis/overspending| E[analysis.py]
-    B -->|GET /stats/monthly| F[stats.py]
+    B <-->|POST /upload/excel| C[upload.py]
+    B <-->|GET /transactions| D[transactions.py]
+    B <-->|GET /analysis/overspending| E[analysis.py]
+    B <-->|GET /stats/monthly| F[stats.py]
 
-    C --> C1[upload_service.py] --> G[(parquet)]
-    D --> D1[transaction_service.py] --> G
-    E --> E1[overspending_service.py] --> G
-    F --> F1[stats_service.py] --> G
+    C <--> C1[upload_service.py]
+    C1 --> H[(resData/)]
+    C1 <--> G[(data/parquet)]
+
+    D <--> D1[transaction_service.py] <--> G
+    E <--> E1[overspending_service.py] <--> G
+    F <--> F1[stats_service.py] <--> G
 ``` 
 
 1. 파일 업로드
-    Flutter → POST /upload/excel → upload.py → upload_service.py
+    - Flutter → POST /upload/excel → upload.py → upload_service.py
 
 2. 거래내역 조회
-    Flutter → GET /transactions/ → transactions.py → transaction_service.py
+    - Flutter → GET /transactions/ → transactions.py → transaction_service.py
 
-3. 과소비 분석 (TODO)
-    Flutter → GET /analysis/overspending → analysis.py (미완성)
+3. 과소비 분석
+    - Flutter → GET /analysis/overspending → analysis.py → overspending_service.py
+
+4. 월별 통계
+    - Flutter → GET /stats/monthly → stats.py → stats_service.py
+
 
 ## 서버 실행
     cd backend
