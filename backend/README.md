@@ -1,9 +1,25 @@
-## 주요 디렉토리 및 파일
-    - resData/    : 원본 Excel 파일
-    - data/       : 변환된 Parquet 파일
-    - parse/      : 필터링 결과
-    - logs/       : 로그 파일
-    - config.py   : 공통 설정값
+## 디렉토리 트리
+    backend/
+    ├── app/
+    │   ├── main.py                         # FastAPI 앱 진입점
+    │   ├── routers/        
+    │   │   ├── upload.py                   # POST /upload/excel
+    │   │   ├── transactions.py             # GET /transactions/
+    │   │   ├── analysis.py                 # GET /analysis/overspending
+    │   │   └── stats.py                    # GET /stats/monthly
+    │   └── service/        
+    │       ├── upload_service.py           # 엑셀 → Parquet 변환
+    │       ├── transaction_service.py      # 거래내역 조회
+    │       ├── overspending_service.py     # 과소비 분석
+    │       └── stats_service.py            # 월별 통계
+    ├── config.py                           # 경로 설정
+    ├── logger.py                           # 로깅 설정
+    ├── resData/                            # 원본 엑셀 파일   
+    ├── data/                               # 변환된 데이터       
+    ├── logs/                               # 로그 파일
+    ├── README.md                           # 프로젝트 문서
+    ├── requirements.txt                    # 의존성 목록
+    └── venv_guide.txt                      # 가상환경 가이드
 
 
 ## 필요한 추가 모듈 (표준 라이브러리 외)
@@ -17,21 +33,27 @@
 
 
 ## API별 흐름
+0. flowchart LR
+    A[Flutter] --> B[main.py]
+
+    B -->|POST /upload/excel| C[upload.py]
+    B -->|GET /transactions| D[transactions.py]
+    B -->|GET /analysis/overspending| E[analysis.py]
+    B -->|GET /stats/monthly| F[stats.py]
+
+    C --> C1[upload_service.py] --> G[(parquet)]
+    D --> D1[transaction_service.py] --> G
+    E --> E1[overspending_service.py] --> G
+    F --> F1[stats_service.py] --> G
+
 1. 파일 업로드
     Flutter → POST /upload/excel → upload.py → upload_service.py
-    - 엑셀 파일을 resData/에 저장
-    - parquet 파일로 변환 후, data/에 저장
 
 2. 거래내역 조회
     Flutter → GET /transactions/ → transactions.py → transaction_service.py
-    - Parquet 파일 읽기
-    - 카테고리/날짜 필터링
-    - 페이지네이션
-    - { transactions, total_count, has_more } 반환
 
 3. 과소비 분석 (TODO)
     Flutter → GET /analysis/overspending → analysis.py (미완성)
-
 
 ## 서버 실행
     cd backend

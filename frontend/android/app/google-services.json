@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "916300131586",
+    "project_id": "banksalad-fcm",
+    "storage_bucket": "banksalad-fcm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:916300131586:android:83ca85501265047e0d261b",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXewPmapyqM36a-QblkK4eZ0BldG9HmRc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

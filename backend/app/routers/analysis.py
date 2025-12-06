@@ -1,12 +1,16 @@
 from fastapi import APIRouter
-import pandas as pd
-from config import DATA_DIR
+from app.service.overspending_service import analyze_overspending
+from fastapi import HTTPException
 
 analysis_router = APIRouter(prefix="/analysis", tags=["분석"])
 
 @analysis_router.get("/overspending")
 def get_overspending_analysis():
     """과소비 패턴 분석"""
-    df = pd.read_parquet(DATA_DIR / "test_excel_file.parquet")
-    # 분석 로직...
-    return {"overspending_categories": [...], "total_overspent": 150000}
+    try:
+        patterns = analyze_overspending()
+        return {"count": len(patterns), "patterns": patterns}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="과소비 분석 중 오류 발생")

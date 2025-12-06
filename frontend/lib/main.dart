@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'screens/home_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/overspending_screen.dart';
+import 'services/fcm_service.dart';
 
-void main() {
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Firebase 초기화
+  await Firebase.initializeApp();
+
+  // FCM 설정
+  FirebaseMessaging.onBackgroundMessage(FCMService.backgroundHandler);
+  await FCMService().init();
+  
   runApp(const MyApp());
 }
 

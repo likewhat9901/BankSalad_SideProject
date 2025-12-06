@@ -17,6 +17,7 @@ app = FastAPI(
 # Flutter 앱에서 호출할 수 있도록 CORS 설정
 app.add_middleware(
     CORSMiddleware,
+    # TODO: 프로덕션 배포 시 특정 도메인으로 제한
     allow_origins=["*"],  # 개발 중에는 전체 허용
     allow_credentials=True,
     allow_methods=["*"],

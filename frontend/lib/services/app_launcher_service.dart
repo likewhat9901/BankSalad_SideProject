@@ -1,4 +1,5 @@
 import 'package:external_app_launcher/external_app_launcher.dart';
+import 'logger_service.dart';
 
 class AppLauncherService {
   static const String _bankSaladPackage = 'com.rainist.banksalad2';

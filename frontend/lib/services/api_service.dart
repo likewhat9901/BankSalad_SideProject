@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 
 import 'logger_service.dart';
 import '../models/transaction.dart';
+import '../models/overspending_pattern.dart';
 
 
 class ApiService {
@@ -73,7 +74,7 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);    // 백엔드 응답: { "transactions": [...], "total_count": 100, "has_more": true }
         
-        final List<dynamic> txList = data['transactions'];
+        final List<dynamic> txList = data['transactions'] ?? [];
         final List<Transaction> transactions = 
           txList.map((json) => Transaction.fromJson(json)).toList();
         
@@ -81,10 +82,10 @@ class ApiService {
         LoggerService.debug('거래내역 ${txList.length}건 로드 완료');
         
         return {
-        'transactions': transactions,
-        'total_count': data['total_count'] ?? 0,
-        'has_more': data['has_more'] ?? false,
-      };
+          'transactions': transactions,
+          'total_count': (data['total_count'] ?? 0).toInt(),
+          'has_more': (data['has_more'] ?? false),
+        };
       } else {
         // 🔹 HTTP 에러 로그
         LoggerService.warning('API 오류 응답: ${response.statusCode}');
@@ -94,6 +95,39 @@ class ApiService {
       }
     } catch (e, stackTrace) {
       // 🔹 예외 발생 로그 (네트워크 오류 등)
+      LoggerService.error('API 호출 실패: $uri', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// 과소비 패턴 분석
+  static Future<List<OverspendingPattern>> getOverspendingPatterns() async {
+    final uri = Uri.parse('$baseUrl/analysis/overspending');
+    
+    LoggerService.debug('과소비 분석 API 요청: $uri');
+    
+    try {
+      final response = await http.get(uri).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('서버 응답 시간 초과'),
+      );
+      
+      LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> patternList = data['patterns'];
+        
+        LoggerService.debug('과소비 패턴 ${patternList.length}건 로드 완료');
+        
+        return patternList
+            .map((json) => OverspendingPattern.fromJson(json))
+            .toList();
+      } else {
+        LoggerService.warning('API 오류 응답: ${response.statusCode}');
+        throw Exception('과소비 분석 실패: ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
       LoggerService.error('API 호출 실패: $uri', e, stackTrace);
       rethrow;
     }
