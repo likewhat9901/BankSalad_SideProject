@@ -32,9 +32,10 @@ flowchart LR
     B <-->|GET /analysis/overspending| E[analysis.py]
     B <-->|GET /stats/monthly| F[stats.py]
 
-    C <--> C1[upload_service.py]
-    C1 --> H[(resData/)]
-    C1 <--> G[(data/parquet)]
+    C --> H[(resData/)]
+    C --> C1[upload_service.py]
+    H -.-> C1
+    C1 --> G[(data/parquet)]
 
     D <--> D1[transaction_service.py] <--> G
     E <--> E1[overspending_service.py] <--> G

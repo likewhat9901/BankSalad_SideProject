@@ -45,4 +45,4 @@
     pip install -r requirements.txt
 
 99. 나가기 or 비활성화
-    deactivate
+    venv\Scripts\deactivate
