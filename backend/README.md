@@ -33,7 +33,7 @@
 
 
 ## API별 흐름
-
+```mermaid
 flowchart LR
     A[Flutter] --> B[main.py]
 
@@ -46,7 +46,7 @@ flowchart LR
     D --> D1[transaction_service.py] --> G
     E --> E1[overspending_service.py] --> G
     F --> F1[stats_service.py] --> G
-
+``` 
 
 1. 파일 업로드
     Flutter → POST /upload/excel → upload.py → upload_service.py
