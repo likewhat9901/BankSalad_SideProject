@@ -33,7 +33,7 @@ flowchart LR
     B <-->|GET /stats/monthly| F[stats.py]
 
     C --> H[(resData/)]
-    C --> C1[upload_service.py]
+    C <--> C1[upload_service.py]
     H -.-> C1
     C1 --> G[(data/parquet)]
 
@@ -43,16 +43,24 @@ flowchart LR
 ``` 
 
 1. 파일 업로드
-    - Flutter → POST /upload/excel → upload.py → upload_service.py
+    - 요청: Flutter → POST /upload/excel → upload.py → upload_service.py
+    - 처리: resData/에 엑셀 저장 → data/parquet으로 변환
+    - 응답: { status, message, output_file }
 
 2. 거래내역 조회
-    - Flutter → GET /transactions/ → transactions.py → transaction_service.py
+    - 요청: Flutter → GET /transactions/ → transactions.py → transaction_service.py
+    - 처리: parquet 읽기 → 필터링 → 페이지네이션
+    - 응답: { transactions, total_count, has_more }
 
 3. 과소비 분석
-    - Flutter → GET /analysis/overspending → analysis.py → overspending_service.py
+    - 요청: Flutter → GET /analysis/overspending → analysis.py → overspending_service.py
+    - 처리: parquet 읽기 → 규칙 기반 패턴 분석
+    - 응답: { count, patterns }
 
 4. 월별 통계
-    - Flutter → GET /stats/monthly → stats.py → stats_service.py
+    - 요청: Flutter → GET /stats/monthly?year=2024&month=12 → stats.py → stats_service.py
+    - 처리: parquet 읽기 → 수입/지출 집계
+    - 응답: { month, total_income, total_expense, balance, income_breakdown, expense_breakdown }
 
 
 ## 서버 실행

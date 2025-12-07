@@ -25,6 +25,16 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
+  # 이미지 파일 경로 설정
+  assets:
+    - assets/images/
+
+# 앱 아이콘 설정
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/banksalad_app_icon.png"

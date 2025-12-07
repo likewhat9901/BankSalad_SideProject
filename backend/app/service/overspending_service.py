@@ -39,17 +39,25 @@ OVERSPENDING_RULES = [
 ]
 
 
-def analyze_overspending() -> list[dict]:
+def analyze_overspending(start_date: str | None = None, end_date: str | None = None) -> list[dict]:
     """과소비 패턴 분석"""
     parquet_path = get_parquet_path()
     
     if not parquet_path.exists():
-        logger.warning("파일 없음 - 빈 결과 반환")
+        logger.warning("parquet 파일 없음 - 빈 결과 반환")
         return []
     
     try:
         # 1. Parquet 파일 읽기
         df = pd.read_parquet(parquet_path)
+
+        if start_date:
+            df = df[df["거래일시"] >= pd.to_datetime(start_date)]
+        if end_date:
+            df = df[df["거래일시"] <= pd.to_datetime(end_date)]
+        if df.empty:
+            logger.warning("필터링 후 데이터 없음")
+            return []
 
         # 2. 지출 데이터만 필터링
         df = df[df["타입"] == "지출"]

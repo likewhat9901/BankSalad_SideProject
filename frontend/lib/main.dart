@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: '뱅크샐러드 앱',
       theme: ThemeData(
-        colorScheme: .fromSeed(
+        colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF00D4AA), // 뱅크샐러드 민트색
           brightness: Brightness.light,
         ),

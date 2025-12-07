@@ -30,6 +30,7 @@ class ApiService {
         return json.decode(response.body);
       } else {
         LoggerService.error('업로드 실패: ${response.statusCode}');
+        LoggerService.error('응답 본문: ${response.body}');
         throw Exception('파일 업로드 실패: ${response.statusCode}');
       }
     } catch (e, stackTrace) {
@@ -101,8 +102,14 @@ class ApiService {
   }
 
   /// 과소비 패턴 분석
-  static Future<List<OverspendingPattern>> getOverspendingPatterns() async {
-    final uri = Uri.parse('$baseUrl/analysis/overspending');
+  static Future<List<OverspendingPattern>> getOverspendingPatterns({int? year, int? month}) async {
+    final query = <String, String>{};
+    if (year != null && month != null) {
+      query['year'] = year.toString();
+      query['month'] = month.toString();
+    }
+    
+    final uri = Uri.parse('$baseUrl/analysis/overspending').replace(queryParameters: query.isEmpty ? null : query);
     
     LoggerService.debug('과소비 분석 API 요청: $uri');
     
@@ -126,6 +133,34 @@ class ApiService {
       } else {
         LoggerService.warning('API 오류 응답: ${response.statusCode}');
         throw Exception('과소비 분석 실패: ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      LoggerService.error('API 호출 실패: $uri', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// 월별 통계 조회
+  static Future<Map<String, dynamic>> getMonthlyStats(int year, int month) async {
+    final uri = Uri.parse('$baseUrl/stats/monthly?year=$year&month=$month');
+    
+    LoggerService.debug('월별 통계 API 요청: $uri');
+    
+    try {
+      final response = await http.get(uri).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('서버 응답 시간 초과'),
+      );
+      
+      LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        LoggerService.debug('월별 통계 로드 완료');
+        return data;
+      } else {
+        LoggerService.warning('API 오류 응답: ${response.statusCode}');
+        throw Exception('월별 통계 조회 실패: ${response.statusCode}');
       }
     } catch (e, stackTrace) {
       LoggerService.error('API 호출 실패: $uri', e, stackTrace);
