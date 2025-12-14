@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/app_launcher_service.dart';
+import '../widgets/excel_upload_button.dart';
 
 class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidget
   const HomeScreen({super.key});
@@ -54,7 +55,17 @@ class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidge
                   const Text('뱅크샐러드 열기 (Play Store)'),
                 ],
               ),
-            )
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+            ),
+            const SizedBox(height: 16),  // 추가: 버튼 사이 여백
+            ExcelUploadButton(  // 추가: 엑셀 파일 업로드 버튼
+              onUploadSuccess: () {
+                // 업로드 성공 시 할 일 (선택사항)
+                // 예: 거래내역 화면으로 이동하거나 메시지 표시
+              },
+            ),
           ],
         ),
       ),

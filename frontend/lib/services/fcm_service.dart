@@ -28,11 +28,11 @@ class FCMService {
         sound: true,
         );
 
-        LoggerService.info('🔔 알림 권한 상태: ${settings.authorizationStatus}');
+        LoggerService.info('알림 권한 상태: ${settings.authorizationStatus}');
 
         // FCM 토큰 가져오기
         _token = await messaging.getToken();
-        LoggerService.info('🔑 FCM Token: $_token');
+        LoggerService.info('FCM Token: $_token');
 
         // 포그라운드 메시지 수신 리스너
         FirebaseMessaging.onMessage.listen(_onForegroundMessage);
@@ -53,12 +53,12 @@ class FCMService {
   } 
 
   void _onForegroundMessage(RemoteMessage message) {
-    LoggerService.info('📩 포그라운드 메시지: ${message.notification?.title}');
+    LoggerService.info('포그라운드 메시지: ${message.notification?.title}');
     // TODO: 필요시 로컬 알림 표시
   }
 
   void _onMessageOpenedApp(RemoteMessage message) {
-    LoggerService.info('👆 알림 탭으로 앱 열림: ${message.notification?.title}');
+    LoggerService.info('알림 탭으로 앱 열림: ${message.notification?.title}');
     // TODO: 특정 화면으로 이동 로직
   }
 }

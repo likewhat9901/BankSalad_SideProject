@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/transaction.dart';
-import '../services/api_service.dart';
 import '../widgets/excel_upload_button.dart';
 import '../widgets/month_selector.dart';
+import '../widgets/monthly_stats_card.dart';
+import '../widgets/transaction_tile.dart';
+import '../services/api/transaction_api.dart';
+import '../services/api/stats_api.dart';
+
+
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -53,33 +58,32 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   // 월 변경
   void _changeMonth(int delta) {
-    setState(() {
-      _selectedMonth += delta;    // delta만큼 월 변경 (-1: 이전월, +1: 다음월)
-      if (_selectedMonth > 12) {
-        _selectedMonth = 1;    // 12월 넘으면 다음 해 1월
-        _selectedYear++;
-      } else if (_selectedMonth < 1) {
-        _selectedMonth = 12;    // 1월 미만이면 전 해 12월
-        _selectedYear--;
-      }
+    // 새로운 날짜 계산 (delta만큼 월 변경)
+    final newDate = DateTime(_selectedYear, _selectedMonth + delta);    // Dart의 DateTime 생성자는 월이 범위를 벗어나면 연도를 자동으로 조정
+    setState(() { // 월 변경 시 상태 업데이트
+      _selectedYear = newDate.year;    // 연도 업데이트
+      _selectedMonth = newDate.month;    // 월 업데이트
     });
     _loadMonthlyData();    // 월 변경 후 월별 데이터 다시 로드
   }
 
+  // 상태 초기화
+  void _resetState() {
+    _isLoading = true;        // 로딩 플래그 초기화
+    _hasError = false;        // 에러 플래그 초기화
+    _transactions.clear();    // 거래내역 리스트 초기화
+    _offset = 0;              // 페이지네이션 오프셋 초기화
+    _hasMore = true;          // 더 불러올 데이터가 있는지 여부 초기화
+    _monthlyStats = null;     // 월별 통계 데이터 초기화
+  }
+
   // 월별 데이터 로드 (통계 + 거래내역)
   Future<void> _loadMonthlyData() async {
-    setState(() {
-      _isLoading = true;          // 로딩 시작
-      _hasError = false;          // 에러 초기화
-      _transactions.clear();      // 거래내역 리스트 초기화
-      _offset = 0;                // 페이지네이션 오프셋 초기화
-      _hasMore = true;            // 더 불러올 데이터가 있는지 여부 초기화
-      _monthlyStats = null;       // 월별 통계 데이터 초기화
-    });
+    setState(_resetState); 
 
     try {
       // 1. 월별 통계 로드
-      final stats = await ApiService.getMonthlyStats(_selectedYear, _selectedMonth);
+      final stats = await StatsApi.getMonthlyStats(_selectedYear, _selectedMonth);
       setState(() => _monthlyStats = stats);    // 통계 저장
 
       // 2. 해당 월 거래내역 로드
@@ -91,14 +95,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     }
   }
 
-  // 해당 월의 시작 날짜 계산 (예: 2024-12-01)
-  String get _startDate => '$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}-01';
-
-  // 해당 월의 마지막 날짜 계산 (예: 2024-12-31)
-  String get _endDate {
-    final lastDay = DateTime(_selectedYear, _selectedMonth + 1, 0).day;    // 다음 달 0일 = 이번 달 마지막 날
-    return '$_selectedYear-${_selectedMonth.toString().padLeft(2, '0')}-$lastDay';    // 예: 2024-12-31
-  }
+  // 해당 월의 시작/끝 날짜를 한 번에 계산
+  DateTime get _selectedMonthStart => DateTime(_selectedYear, _selectedMonth, 1);
+  DateTime get _selectedMonthEnd => DateTime(_selectedYear, _selectedMonth + 1, 0);
+  
+  String get _startDate => '${_selectedMonthStart.year}-${_selectedMonthStart.month.toString().padLeft(2, '0')}-01';
+  String get _endDate => '${_selectedMonthEnd.year}-${_selectedMonthEnd.month.toString().padLeft(2, '0')}-${_selectedMonthEnd.day}';
 
   // 거래내역 로드 (페이지네이션)
   Future<void> _loadTransactions({bool isRefresh = false}) async {
@@ -106,9 +108,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     setState(() => _isLoading = true);    // 로딩 시작
 
     try {
-      final result = await ApiService.getTransactionsPaginated(
+      final result = await TransactionApi.getTransactionsPaginated(
         limit: _limit,           // 한 번에 불러올 개수
-        offset: _offset,         // 건너뛸 개수
+        offset: isRefresh ? 0 : _offset,         // 건너뛸 개수
         startDate: _startDate,   // 시작 날짜
         endDate: _endDate,       // 끝 날짜
       );
@@ -116,10 +118,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       final List<Transaction> newTransactions = result['transactions'];
       
       setState(() {
-        _transactions.addAll(newTransactions);    // 기존 리스트에 추가
-        _hasMore = result['has_more'] ?? false;   // 더 불러올 데이터 있는지 확인
-        _offset = _transactions.length;           // 오프셋 업데이트
-      });
+      if (isRefresh) {
+        // 새로고침일 때는 기존 리스트를 완전히 교체
+        _transactions.clear();
+        _transactions.addAll(newTransactions);
+        _offset = newTransactions.length;
+      } else {
+        // 추가 로드일 때만 기존 리스트에 추가
+        _transactions.addAll(newTransactions);
+        _offset = _transactions.length;
+      }
+      _hasMore = result['has_more'] ?? false;
+    });
     } catch (e) {
       setState(() => _hasError = true);    // 에러 발생 시 플래그 설정
     } finally {
@@ -159,63 +169,54 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
-  // 통계 카드
-  Widget _buildStatsCard() {
-    final stats = _monthlyStats!;
-    final totalIncome = stats['total_income'] ?? 0;       // 총 수입 (수입 합계)
-    final totalExpense = stats['total_expense'] ?? 0;     // 총 지출 (지출 합계)
-    final balance = stats['balance'] ?? 0;                // 순 잔액 (수입 - 지출)
-
-    return Card(
-      margin: const EdgeInsets.all(12),    // 여백
-      child: Padding(
-        padding: const EdgeInsets.all(16),    // 패딩
-        child: Column(
-          children: [    // 수입, 지출, 잔액 표시
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,    // 양쪽 정렬
-              children: [
-                _buildStatItem('수입', totalIncome, Colors.green),    // 수입 표시
-                Container(width: 1, height: 40, color: Colors.grey.shade300),    // 구분선
-                _buildStatItem('지출', totalExpense, Colors.red),    // 지출 표시
-              ],
-            ),
-            const Divider(height: 24),    // 구분선
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,    // 중앙 정렬
-              children: [
-                const Text('순수입  ', style: TextStyle(fontSize: 16)),    // 순수입 텍스트
-                Text(
-                  '${balance >= 0 ? '+' : ''}${_currencyFormat.format(balance)}원',    // 순수입 금액 표시 (양수: +, 음수: -)
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: balance >= 0 ? Colors.blue : Colors.red,    // 순수입 색상 (양수: 파랑, 음수: 빨강)
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+  // 통계 카드 - 위젯으로 분리(monthly_stats_card.dart)
+    Widget _buildStatsCard() {
+    return MonthlyStatsCard(
+      stats: _monthlyStats!,    // 월별 통계 데이터
+      currencyFormat: _currencyFormat,    // 금액 포맷터
     );
   }
 
-  // 통계 아이템 (수입/지출 표시용)
-  Widget _buildStatItem(String label, int amount, Color color) {
-    return Column(
-      children: [
-        Text(label, style: TextStyle(color: Colors.grey.shade600)),    // 라벨 텍스트
-        const SizedBox(height: 4),    // 여백
-        Text(
-          '${_currencyFormat.format(amount)}원',    // 금액 표시
-          style: TextStyle(
-            fontSize: 18,    // 폰트 크기
-            fontWeight: FontWeight.bold,    // 폰트 굵기
-            color: color,    // 색상 (수입: 초록, 지출: 빨강)
-          ),
-        ),
-      ],
+    // 날짜별로 거래내역 그룹화
+  List<Map<String, dynamic>> _groupTransactionsByDate() {
+    final Map<String, List<Transaction>> grouped = {};
+    
+    for (var tx in _transactions) {
+      // 날짜에서 날짜 부분만 추출 (예: "2024-12-07 11:30:00" -> "2024-12-07")
+      final dateOnly = tx.date.split(' ')[0];
+      if (!grouped.containsKey(dateOnly)) {
+        grouped[dateOnly] = [];
+      }
+      grouped[dateOnly]!.add(tx);
+    }
+    
+    // 날짜 순서대로 정렬 (최신순)
+    final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+    
+    // 날짜 헤더와 거래내역을 함께 반환
+    final List<Map<String, dynamic>> result = [];
+    for (var date in sortedDates) {
+      result.add({'type': 'header', 'date': date});
+      for (var tx in grouped[date]!) {
+        result.add({'type': 'transaction', 'transaction': tx});
+      }
+    }
+    
+    return result;
+  }
+
+  // 날짜 헤더 위젯
+  Widget _buildDateHeader(String date) {
+    // 날짜 포맷팅 (예: "2024-12-07" -> "12월 7일 (월)")
+    final dateTime = DateTime.parse(date);
+    final weekday = ['일', '월', '화', '수', '목', '금', '토'][dateTime.weekday % 7];
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Text(
+        '${dateTime.month}월 ${dateTime.day}일 ($weekday)',
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+      ),
     );
   }
 
@@ -276,108 +277,45 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       );
     }
 
+    // 날짜별로 그룹화된 데이터
+    final groupedData = _groupTransactionsByDate();
+    final statsOffset = _monthlyStats != null ? 1 : 0;
+    final loadingOffset = _hasMore ? 1 : 0;
+
     // 리스트 표시
     return ListView.builder(
       controller: _scrollController,    // 스크롤 컨트롤러
-      itemCount: _transactions.length + (_hasMore ? 1 : 0) + (_monthlyStats != null ? 1 : 0),    // 거래내역 개수 + 더 불러올 데이터 있는지 여부
+      itemCount: statsOffset + groupedData.length + loadingOffset,
       itemBuilder: (context, index) {
         // 통계 카드 (첫 번째 아이템)
         if (_monthlyStats != null && index == 0) {
           return _buildStatsCard();
         }
 
-        // 거래내역 인덱스 조정 (통계 카드가 있으면 -1)
-        final transactionIndex = _monthlyStats != null ? index - 1 : index;
+        // 날짜별 그룹화된 데이터 인덱스
+        final dataIndex = index - statsOffset;
 
-        // 맨 아래 로딩 인디케이터 (더 불러올 데이터가 있을 때)
-        if (_hasMore && transactionIndex == _transactions.length) {
+        // 맨 아래 로딩 인디케이터
+        if (_hasMore && dataIndex == groupedData.length) {
           return const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),    // 로딩 스피너
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator()),
           );
         }
-        return _buildTransactionTile(_transactions[transactionIndex]);    // 거래내역 타일
+
+        // 날짜 헤더 또는 거래내역 타일
+        final item = groupedData[dataIndex];
+        if (item['type'] == 'header') {
+          return _buildDateHeader(item['date']);
+        } else {
+          // 거래내역 타일 - 위젯으로 분리(transaction_tile.dart)
+          return TransactionTile(
+            transaction: item['transaction'],    // 거래내역 데이터
+            currencyFormat: _currencyFormat,    // 금액 포맷터
+            onUpdate: _loadMonthlyData,    // 수정 시 데이터 다시 로드
+          );
+        }
       },
-    );
-  }
-
-  // 카테고리별 아이콘과 색상 반환
-  Map<String, dynamic> _getCategoryIcon(String category) {
-    final c = category.toLowerCase();
-    final map = {
-      // 수입 카테고리
-      '급여': {'icon': Icons.account_balance_wallet, 'color': Colors.green},
-      '지원금': {'icon': Icons.attach_money, 'color': Colors.green},
-      '금융수입': {'icon': Icons.payments, 'color': Colors.green},
-
-      // 지출 카테고리
-      '식사': {'icon': Icons.restaurant, 'color': Colors.orange},
-      '카페/간식': {'icon': Icons.local_cafe, 'color': Colors.brown},
-      '술/유흥': {'icon': Icons.local_bar, 'color': Colors.purple},
-      '의복/미용': {'icon': Icons.checkroom, 'color': Colors.pink},
-      '문화/여가': {'icon': Icons.movie, 'color': Colors.blue},
-      '교통': {'icon': Icons.directions_car, 'color': Colors.teal},
-      '생활': {'icon': Icons.shopping_cart, 'color': Colors.indigo},
-      '의료/건강': {'icon': Icons.local_hospital, 'color': Colors.red},
-      '주거/통신': {'icon': Icons.home, 'color': Colors.cyan},
-      '할부': {'icon': Icons.credit_card, 'color': Colors.red},
-      '경조사': {'icon': Icons.celebration, 'color': Colors.pink},
-      '교육': {'icon': Icons.school, 'color': Colors.blue},
-      '기타': {'icon': Icons.category, 'color': Colors.grey},
-    };
-    
-    for (var key in map.keys) {
-      if (c.contains(key)) return map[key]!;
-    }
-    return {'icon': Icons.category, 'color': Colors.grey};
-  }
-
-  Widget _buildTransactionTile(Transaction tx) {
-    final isExpense = tx.amount < 0;    // 지출 여부 (음수면 지출)
-    final cat = _getCategoryIcon(tx.category);
-    
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),    // 여백
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: cat['color'].withOpacity(0.2),  // 수정
-          child: Icon(cat['icon'], color: cat['color']),  // 수정
-        ),
-        title: Text(    // 내용
-          tx.description.isEmpty ? '내역 없음' : tx.description,    // 내용이 없으면 '내역 없음' 표시
-          maxLines: 1,    // 최대 1줄
-          overflow: TextOverflow.ellipsis,    // 줄 바꿈 방지
-        ),
-        subtitle: Column(    // 하위 텍스트
-          crossAxisAlignment: CrossAxisAlignment.start,    // 왼쪽 정렬
-          children: [
-            Text(tx.date),    // 날짜
-            Container(
-              margin: const EdgeInsets.only(top: 4),    // 여백
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),    // 패딩
-              decoration: BoxDecoration(    // 배경
-                color: Colors.grey.shade200,    // 회색 배경
-                borderRadius: BorderRadius.circular(12),    // 라운드 코너
-              ),
-              child: Text(
-                '${tx.category} | ${tx.paymentMethod}',
-                style: const TextStyle(fontSize: 12),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-        trailing: Text(    // 트레일링 텍스트 
-          '${isExpense ? "-" : "+"}${_currencyFormat.format(tx.amount.abs())}원',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,    // 폰트 굵기
-            color: isExpense ? Colors.red : Colors.green,    // 색상 (지출: 빨강, 수입: 초록)
-            fontSize: 16,    // 폰트 크기
-          ),
-        ),    // 텍스트 스타일
-        isThreeLine: true,    // 세 줄 표시
-      ),
     );
   }
 }

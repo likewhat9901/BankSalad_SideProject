@@ -33,6 +33,14 @@ def excel_to_parquet(
     other_cols = [col for col in df.columns if col not in ['거래일시', '날짜', '시간']]
     df = df[['거래일시'] + other_cols]
 
+    # ID 컬럼 추가
+    df = df.sort_values("거래일시", ascending=False).reset_index(drop=True)
+
+    # 거꾸로 ID 부여
+    df['id'] = (len(df) - 1) - df.index
+    cols = ['id'] + [col for col in df.columns if col != 'id']    # ID 컬럼을 첫 번째 위치로 이동
+    df = df[cols]    # 컬럼 순서 변경
+
     # Parquet 파일로 저장
     output_parquet_file.parent.mkdir(parents=True, exist_ok=True)
 

@@ -1,42 +1,150 @@
 import pandas as pd
+import json
+from pathlib import Path
 from config import get_parquet_path
 from logger import setup_logger
 
 logger = setup_logger(__name__)
 
-# 과소비 기준 정의 (설정만 바꾸면 됨)
-OVERSPENDING_RULES = [
-    {
-        "name": "식사 (야간)",
-        "category_filter": "식사",
-        "time_filter": (18, 6),           # 야간 시간대 (18시~06시)
-        "per_transaction": 10000,
-    },
-    {
-        "name": "카페/간식",
-        "category_filter": "카페/간식",
-        "weekly_count": 5,
-        "per_transaction": 10000,
-    },
-    {
-        "name": "술/유흥",
-        "category_filter": "술/유흥",
-        "weekly_count": 3,
-        "per_transaction": 30000,
-    },
-    {
-        "name": "의복/미용",
-        "category_filter": "의복/미용",
-        "monthly_count": 5,
-        "per_transaction": 30000,
-    },
-    {
-        "name": "문화/여가",
-        "category_filter": "문화/여가",
-        "monthly_total": 10000,
-        "per_transaction": 5000,
-    },
-]
+
+def get_rules_path() -> Path:
+    """과소비 규칙 JSON 파일 경로"""
+    # app/config/overspending_rules.json
+    current_file = Path(__file__)
+    config_dir = current_file.parent.parent / "config"
+    return config_dir / "overspending_rules.json"
+
+
+def _convert_time_filter_to_tuple(rule: dict) -> dict:
+    """time_filter를 튜플로 변환 (내부 처리용)"""
+    if 'time_filter' in rule and isinstance(rule['time_filter'], list):
+        rule['time_filter'] = tuple(rule['time_filter'])
+    return rule
+
+
+def _convert_time_filter_to_list(rule: dict) -> dict:
+    """time_filter를 리스트로 변환 (JSON 저장용)"""
+    rule_copy = rule.copy()
+    if 'time_filter' in rule_copy and isinstance(rule_copy['time_filter'], tuple):
+        rule_copy['time_filter'] = list(rule_copy['time_filter'])
+    return rule_copy
+
+
+def load_overspending_rules(include_disabled: bool = False) -> list[dict]:
+    """JSON 파일에서 과소비 규칙 로드"""
+    rules_path = get_rules_path()
+    
+    if not rules_path.exists():
+        error_msg = f"규칙 파일이 없습니다: {rules_path}"
+        logger.error(error_msg)
+        raise FileNotFoundError(error_msg)
+    
+    try:
+        with open(rules_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            rules = data.get('rules', [])
+            
+            if not rules:
+                raise ValueError("규칙 파일에 규칙이 없습니다")
+            
+            # enabled 필터링 (분석용은 enabled만, 조회용은 모두)
+            if not include_disabled:
+                rules = [r for r in rules if r.get('enabled', True)]
+            
+            # time_filter를 튜플로 변환
+            for rule in rules:
+                _convert_time_filter_to_tuple(rule)
+            
+            logger.info(f"과소비 규칙 {len(rules)}개 로드 완료")
+            return rules
+            
+    except json.JSONDecodeError as e:
+        raise ValueError(f"JSON 파싱 오류: {e}")
+    except Exception as e:
+        logger.error(f"규칙 파일 로드 실패: {e}")
+        raise
+
+
+def save_overspending_rules(rules: list[dict]) -> bool:
+    """과소비 규칙을 JSON 파일에 저장"""
+    rules_path = get_rules_path()
+    
+    try:
+        # time_filter를 리스트로 변환
+        rules_to_save = [_convert_time_filter_to_list(rule) for rule in rules]
+        
+        # 디렉토리가 없으면 생성
+        rules_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(rules_path, 'w', encoding='utf-8') as f:
+            json.dump({"rules": rules_to_save}, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"과소비 규칙 {len(rules)}개 저장 완료")
+        return True
+        
+    except Exception as e:
+        logger.error(f"규칙 파일 저장 실패: {e}")
+        return False
+
+
+def _find_rule_index_by_id(rules: list[dict], rule_id: int) -> int | None:
+    """ID로 규칙 인덱스 찾기"""
+    for i, rule in enumerate(rules):
+        if rule.get('id') == rule_id:
+            return i
+    return None
+
+
+def add_overspending_rule(rule: dict) -> dict:
+    """과소비 규칙 추가"""
+    rules = load_overspending_rules(include_disabled=True)  # 모든 규칙 로드
+    
+    # ID 자동 생성
+    max_id = max([r.get('id', 0) for r in rules], default=0)
+    rule['id'] = max_id + 1
+    
+    rules.append(rule)
+    
+    if not save_overspending_rules(rules):
+        raise Exception("규칙 저장 실패")
+    
+    logger.info(f"규칙 추가 완료: {rule['name']} (ID: {rule['id']})")
+    return rule
+
+
+def update_overspending_rule(rule_id: int, updated_rule: dict) -> dict | None:
+    """과소비 규칙 수정"""
+    rules = load_overspending_rules(include_disabled=True)
+    
+    rule_index = _find_rule_index_by_id(rules, rule_id)
+    if rule_index is None:
+        return None
+    
+    updated_rule['id'] = rule_id
+    rules[rule_index] = updated_rule
+    
+    if not save_overspending_rules(rules):
+        raise Exception("규칙 저장 실패")
+    
+    logger.info(f"규칙 수정 완료: ID {rule_id}")
+    return updated_rule
+
+
+def delete_overspending_rule(rule_id: int) -> bool:
+    """과소비 규칙 삭제"""
+    rules = load_overspending_rules(include_disabled=True)
+    
+    rule_index = _find_rule_index_by_id(rules, rule_id)
+    if rule_index is None:
+        return False
+    
+    deleted_rule = rules.pop(rule_index)
+    
+    if not save_overspending_rules(rules):
+        raise Exception("규칙 저장 실패")
+    
+    logger.info(f"규칙 삭제 완료: {deleted_rule.get('name')} (ID: {rule_id})")
+    return True
 
 
 def analyze_overspending(start_date: str | None = None, end_date: str | None = None) -> list[dict]:
@@ -48,44 +156,38 @@ def analyze_overspending(start_date: str | None = None, end_date: str | None = N
         return []
     
     try:
-        # 1. Parquet 파일 읽기
+        # 데이터 로드 및 필터링
         df = pd.read_parquet(parquet_path)
-
+        
         if start_date:
             df = df[df["거래일시"] >= pd.to_datetime(start_date)]
         if end_date:
             df = df[df["거래일시"] <= pd.to_datetime(end_date)]
         if df.empty:
-            logger.warning("필터링 후 데이터 없음")
             return []
 
-        # 2. 지출 데이터만 필터링
-        df = df[df["타입"] == "지출"]
-        df["금액"] = df["금액"].abs()  # 절댓값으로 변환 (양수로)
-        logger.debug(f"지출 데이터: {len(df)}건")
+        # 지출 데이터만 필터링
+        df = df[df["타입"] == "지출"].copy()
+        df["금액"] = df["금액"].abs()
         
         if df.empty:
-            logger.warning("지출 데이터 없음")
             return []
 
-        # 3. 날짜 데이터 확인
+        # 날짜 데이터 타입 확인
         if not pd.api.types.is_datetime64_any_dtype(df["거래일시"]):
-            logger.error(f"거래일시 데이터 타입 오류: {df['거래일시'].dtype}")
             raise ValueError("거래일시 데이터 타입 오류 - 거래내역 parquet 파일을 확인해주세요.")
         
-        # 4. 시간, 주, 월 데이터 추가
+        # 시간, 주, 월 데이터 추가
         df["hour"] = df["거래일시"].dt.hour
         df["week"] = df["거래일시"].dt.isocalendar().week
         df["month"] = df["거래일시"].dt.to_period("M")
         
-        # 5. 과소비 패턴 분석
-        results = []
-        for rule in OVERSPENDING_RULES:
-            # 각 규칙에 대해 과소비 체크
-            pattern = _check_overspending(df, rule)
-            if pattern:  
-                # reasons가 있는 경우만 추가    
-                results.append(pattern)
+        # 과소비 패턴 분석
+        rules = load_overspending_rules()  # enabled만 로드
+        results = [
+            pattern for rule in rules
+            if (pattern := _check_overspending(df, rule)) is not None
+        ]
         
         logger.info(f"과소비 패턴 {len(results)}건 감지")
         return results
@@ -97,95 +199,29 @@ def analyze_overspending(start_date: str | None = None, end_date: str | None = N
 
 def _check_overspending(df: pd.DataFrame, rule: dict) -> dict | None:
     """범용 과소비 체크 함수"""
-    reasons = []
-    total_amount = 0
-
-    # 1. 카테고리 필터링
-    filtered_df = df[df["대분류"] == rule["category_filter"]]
-    logger.debug(f"[{rule['name']}] 카테고리 필터 후: {len(filtered_df)}건")
-    
+    # 데이터 필터링
+    filtered_df = _filter_by_rule(df, rule)
     if filtered_df.empty:
-        logger.debug(f"해당 카테고리 데이터 없음: {rule['category_filter']}")
-        return None
-    
-    # 2. 시간대 필터 (선택)
-    if "time_filter" in rule:
-        start_hour, end_hour = rule["time_filter"]
-        if start_hour > end_hour:  # 18시~6시 같은 경우
-            time_mask = (filtered_df["hour"] >= start_hour) | (filtered_df["hour"] < end_hour)
-            #           (hour >= 18)                        | (hour < 6)
-            #           True/False 배열                     | True/False 배열
-            #           → [False, True, False, True, ...]  (Boolean Series)
-        else:
-            time_mask = (filtered_df["hour"] >= start_hour) & (filtered_df["hour"] < end_hour)
-        # 97: Boolean으로 필터링 (True인 행만 남김)
-        filtered_df = filtered_df[time_mask]
-    
-    if filtered_df.empty:
-        logger.debug(f"해당 시간대 데이터 없음: {rule.get('time_filter')}")
         return None
 
     total_amount = int(filtered_df["금액"].sum())
+    reasons = []
     
-    # 3. 빈도 체크 (주별)
-    if "weekly_count" in rule:
-        # week 컬럼으로 그룹핑 후 각 그룹의 행 개수 계산
-        weekly_counts = filtered_df.groupby("week").size()
-        # rule["weekly_count"]=5 이상인 것만 필터
-        high_freq = weekly_counts[weekly_counts >= rule["weekly_count"]]
-        # weekly_counts >= 5:
-        # week
-        # 1    False  (3 >= 5 → False)
-        # 2    True   (7 >= 5 → True)
-        # 3    True   (6 >= 5 → True)
-        #
-        # high_freq 결과:
-        # week
-        # 2     7
-        # 3     6
+    # 조건 체크 함수들을 딕셔너리로 관리
+    checkers = {
+        'weekly_count': _check_weekly_count,
+        'monthly_count': _check_monthly_count,
+        'monthly_total': _check_monthly_total,
+        'per_transaction': _check_per_transaction,
+    }
+    
+    # 각 조건 체크
+    for key, checker in checkers.items():
+        if key in rule:
+            reason = checker(filtered_df, rule[key], rule.get('name', ''))
+            if reason:
+                reasons.append(reason)
 
-        # 과소비 주차가 1개 이상 있으면
-        if len(high_freq) > 0:
-            # 과소비 결과 추가
-            reasons.append(_make_reason(
-                "high_frequency",
-                int(weekly_counts.sum()),
-                f"주 {rule['weekly_count']}회 이상 ({len(high_freq)}주)"
-            ))
-    
-    # 4. 빈도 체크 (월별)
-    if "monthly_count" in rule:
-        monthly_counts = filtered_df.groupby("month").size()
-        high_freq = monthly_counts[monthly_counts >= rule["monthly_count"]]
-        if len(high_freq) > 0:
-            reasons.append(_make_reason(
-                "high_frequency",
-                int(monthly_counts.sum()),
-                f"월 {rule['monthly_count']}회 이상 ({len(high_freq)}개월)"
-            ))
-    
-    # 5. 월별 총액 체크
-    if "monthly_total" in rule:
-        monthly_total = filtered_df.groupby("month")["금액"].sum()
-        high_months = monthly_total[monthly_total >= rule["monthly_total"]]
-        if len(high_months) > 0:
-            reasons.append(_make_reason(
-                "high_monthly",
-                len(filtered_df),
-                f"월 총액 {rule['monthly_total']:,}원 초과 ({len(high_months)}개월)"
-            ))
-    
-    # 6. 건당 고액 체크
-    if "per_transaction" in rule:
-        expensive = filtered_df[filtered_df["금액"] >= rule["per_transaction"]]
-        if len(expensive) > 0:
-            reasons.append(_make_reason(
-                "high_amount",
-                len(expensive),
-                f"건당 {rule['per_transaction']:,}원 이상 ({len(expensive)}건)"
-            ))
-
-    # reasons가 없으면 None 반환
     if not reasons:
         return None
     
@@ -196,10 +232,76 @@ def _check_overspending(df: pd.DataFrame, rule: dict) -> dict | None:
     }
 
 
+def _filter_by_rule(df: pd.DataFrame, rule: dict) -> pd.DataFrame:
+    """규칙에 따라 데이터 필터링"""
+    # 카테고리 필터링
+    filtered_df = df[df["대분류"] == rule["category_filter"]]
+    if filtered_df.empty:
+        return filtered_df
+    
+    # 시간대 필터 (선택)
+    if "time_filter" in rule:
+        start_hour, end_hour = rule["time_filter"]
+        if start_hour > end_hour:
+            time_mask = (filtered_df["hour"] >= start_hour) | (filtered_df["hour"] < end_hour)
+        else:
+            time_mask = (filtered_df["hour"] >= start_hour) & (filtered_df["hour"] < end_hour)
+        filtered_df = filtered_df[time_mask]
+    
+    return filtered_df
+
+
+def _check_weekly_count(df: pd.DataFrame, threshold: int, rule_name: str) -> dict | None:
+    """주별 빈도 체크"""
+    weekly_counts = df.groupby("week").size()
+    high_freq = weekly_counts[weekly_counts >= threshold]
+    if len(high_freq) > 0:
+        return _make_reason(
+            "high_frequency",
+            int(weekly_counts.sum()),
+            f"주 {threshold}회 이상 ({len(high_freq)}주)"
+        )
+    return None
+
+
+def _check_monthly_count(df: pd.DataFrame, threshold: int, rule_name: str) -> dict | None:
+    """월별 빈도 체크"""
+    monthly_counts = df.groupby("month").size()
+    high_freq = monthly_counts[monthly_counts >= threshold]
+    if len(high_freq) > 0:
+        return _make_reason(
+            "high_frequency",
+            int(monthly_counts.sum()),
+            f"월 {threshold}회 이상 ({len(high_freq)}개월)"
+        )
+    return None
+
+
+def _check_monthly_total(df: pd.DataFrame, threshold: int, rule_name: str) -> dict | None:
+    """월별 총액 체크"""
+    monthly_total = df.groupby("month")["금액"].sum()
+    high_months = monthly_total[monthly_total >= threshold]
+    if len(high_months) > 0:
+        return _make_reason(
+            "high_monthly",
+            len(df),
+            f"월 총액 {threshold:,}원 초과 ({len(high_months)}개월)"
+        )
+    return None
+
+
+def _check_per_transaction(df: pd.DataFrame, threshold: int, rule_name: str) -> dict | None:
+    """건당 고액 체크"""
+    expensive = df[df["금액"] >= threshold]
+    if len(expensive) > 0:
+        return _make_reason(
+            "high_amount",
+            len(expensive),
+            f"건당 {threshold:,}원 이상 ({len(expensive)}건)"
+        )
+    return None
+
+
 def _make_reason(type_: str, count: int, message: str) -> dict:
     """reason 딕셔너리 생성"""
-    return {
-        "type": type_,
-        "count": count,
-        "message": message
-    }
+    return {"type": type_, "count": count, "message": message}

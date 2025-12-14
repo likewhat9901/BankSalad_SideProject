@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/overspending_pattern.dart';
-import '../services/api_service.dart';
+import '../services/api/analysis_api.dart';
 import '../services/logger_service.dart';
 import '../widgets/month_selector.dart';
+import 'overspending_rules_screen.dart';
 
 class OverspendingScreen extends StatefulWidget {
   const OverspendingScreen({super.key});
@@ -40,7 +41,7 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
     });
 
     try {
-      final result = await ApiService.getOverspendingPatterns(
+      final result = await AnalysisApi.getOverspendingPatterns(
         year: _selectedYear,
         month: _selectedMonth,
       );
@@ -63,7 +64,25 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
         title: const Text('과소비 패턴 분석'),    // 타이틀
         backgroundColor: Colors.redAccent.shade100,    // 빨간색 배경
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),    // 새로고침 버튼
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OverspendingRulesScreen(),
+                ),
+              ).then((_) {
+                // 규칙 수정 후 데이터 새로고침
+                _loadData();
+              });
+            },
+            tooltip: '규칙 관리',
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadData,
+          ),
         ],
       ),
       body: Column(

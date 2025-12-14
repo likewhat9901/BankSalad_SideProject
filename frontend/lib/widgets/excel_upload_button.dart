@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../services/api_service.dart';
+import '../services/api/upload_api.dart';
 import '../services/logger_service.dart';
 
 class ExcelUploadButton extends StatefulWidget {
@@ -34,7 +34,7 @@ class _ExcelUploadButtonState extends State<ExcelUploadButton> {
 
       setState(() => _isUploading = true);
 
-      final response = await ApiService.uploadExcel(file.path!, file.name);
+      final response = await UploadApi.uploadExcel(file.path!, file.name);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,7 +75,7 @@ class _ExcelUploadButtonState extends State<ExcelUploadButton> {
           : const Icon(Icons.upload_file),
       label: Text(_isUploading ? '업로드 중...' : '엑셀 파일 업로드'),
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       ),
     );
   }
