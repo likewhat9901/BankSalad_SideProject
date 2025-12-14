@@ -26,10 +26,9 @@ PARSE_DIR = BASE_DIR / "parse"
 LOG_DIR = BASE_DIR / "logs"
 TEST_DIR = BASE_DIR / "test"
 
-# 디렉토리 검증 (존재하지 않는 경우 예외 발생)
+# 디렉토리 자동 생성 (배포 환경 대응)
 for path in [RES_DATA_DIR, DATA_DIR, PARSE_DIR, LOG_DIR]:
-    if not path.exists():
-        raise RuntimeError(f"폴더 없음: {path}")
+    path.mkdir(parents=True, exist_ok=True)
 
 # === 전역 변수 ===
 def get_parquet_path() -> Path:
