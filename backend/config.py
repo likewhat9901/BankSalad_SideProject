@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import datetime
 
@@ -6,8 +7,12 @@ PROJECT_NAME = "backend"
 
 # === 루트 디렉토리 경로 ===
 BASE_DIR = Path(__file__).parent
-# 루트 디렉토리 검증 (프로젝트 폴더명 검증)
-if BASE_DIR.name != PROJECT_NAME:
+
+# 배포 환경 확인 (Railway 등)
+IS_DEPLOYMENT = os.getenv("RAILWAY_ENVIRONMENT") is not None or os.getenv("PORT") is not None
+
+# 루트 디렉토리 검증 (로컬 개발 환경에서만)
+if not IS_DEPLOYMENT and BASE_DIR.name != PROJECT_NAME:
     raise RuntimeError(
         f"config.py 위치 오류!\n"
         f"  예상: .../{PROJECT_NAME}/config.py\n"
