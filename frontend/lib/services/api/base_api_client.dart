@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../logger_service.dart';
 import 'api_config.dart';
@@ -124,6 +125,54 @@ class BaseApiClient {
       final request = http.MultipartRequest('POST', uri);
       request.files
           .add(await http.MultipartFile.fromPath('file', filePath, filename: fileName));
+
+      // 추가 필드가 있으면 추가
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      // 요청 전송
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        LoggerService.error('API 오류 응답: ${response.statusCode}');
+        LoggerService.error('응답 본문: ${response.body}');
+        throw Exception('Multipart 요청 실패: ${response.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      LoggerService.error('Multipart 요청 실패: $uri', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// POST (Multipart) 요청 공통 처리 (웹용 - 바이트 사용)
+  static Future<Map<String, dynamic>> postMultipartBytes(
+    String endpoint,
+    Uint8List fileBytes,
+    String fileName, {
+    String? logMessage,
+    Map<String, String>? fields,
+  }) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+
+    LoggerService.debug(logMessage ?? 'Multipart API 요청: $uri');
+
+    try {
+      final request = http.MultipartRequest('POST', uri);
+      
+      // 바이트로 MultipartFile 생성
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          fileBytes,
+          filename: fileName,
+        ),
+      );
 
       // 추가 필드가 있으면 추가
       if (fields != null) {

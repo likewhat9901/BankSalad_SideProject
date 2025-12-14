@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_picker/file_picker.dart';
 import '../services/api/upload_api.dart';
 import '../services/logger_service.dart';
 
 class ExcelUploadButton extends StatefulWidget {
-  final VoidCallback? onUploadSuccess;  // 업로드 성공 후 콜백
+  final VoidCallback? onUploadSuccess;
 
   const ExcelUploadButton({super.key, this.onUploadSuccess});
 
@@ -28,22 +29,38 @@ class _ExcelUploadButtonState extends State<ExcelUploadButton> {
       }
 
       final file = result.files.first;
-      if (file.path == null) {
-        throw Exception('파일 경로를 가져올 수 없습니다');
-      }
-
+      
       setState(() => _isUploading = true);
 
-      final response = await UploadApi.uploadExcel(file.path!, file.name);
+      // 웹과 모바일 모두 지원
+      if (kIsWeb) {
+        // 웹: bytes 사용
+        if (file.bytes == null) {
+          throw Exception('파일을 읽을 수 없습니다');
+        }
+        final response = await UploadApi.uploadExcelBytes(
+          file.bytes!,
+          file.name,
+        );
+      } else {
+        // 모바일: path 사용
+        if (file.path == null) {
+          throw Exception('파일 경로를 가져올 수 없습니다');
+        }
+        final response = await UploadApi.uploadExcel(
+          file.path!,
+          file.name,
+        );
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ ${response['message']}'),
+            content: Text('✅ 파일 업로드 성공'),
             backgroundColor: Colors.green,
           ),
         );
-        widget.onUploadSuccess?.call();  // 콜백 호출
+        widget.onUploadSuccess?.call();
       }
     } catch (e) {
       LoggerService.error('업로드 실패', e);

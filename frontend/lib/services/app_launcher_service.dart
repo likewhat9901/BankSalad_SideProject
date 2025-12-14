@@ -1,18 +1,34 @@
-import 'package:external_app_launcher/external_app_launcher.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'logger_service.dart';
 
 class AppLauncherService {
   static const String _bankSaladPackage = 'com.rainist.banksalad2';
+  // 뱅크샐러드 플레이스토어 링크
+  static const String _playStoreUrl = 'https://play.google.com/store/apps/details?id=com.rainist.banksalad2';
+  // 앱 직접 실행 링크 (market://)
+  static const String _marketUrl = 'market://details?id=$_bankSaladPackage';
 
   /// 뱅크샐러드 앱 열기
   static Future<void> openBankSalad() async {
     LoggerService.info('뱅크샐러드 앱 실행 시도');
+    
     try {
-      await LaunchApp.openApp(
-        androidPackageName: _bankSaladPackage,
-        openStore: true,
-      );
-      LoggerService.info('뱅크샐러드 앱 실행 완료');
+      // 먼저 market:// 링크 시도 (앱이 설치되어 있으면 앱 열기)
+      final marketUri = Uri.parse(_marketUrl);
+      if (await canLaunchUrl(marketUri)) {
+        await launchUrl(marketUri);
+        LoggerService.info('뱅크샐러드 앱 실행 완료');
+        return;
+      }
+      
+      // market://이 안되면 플레이스토어 웹 링크로
+      final webUri = Uri.parse(_playStoreUrl);
+      if (await canLaunchUrl(webUri)) {
+        await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        LoggerService.info('플레이스토어 링크로 이동');
+      } else {
+        throw Exception('링크를 열 수 없습니다');
+      }
     } catch (e, stackTrace) {
       LoggerService.error('뱅크샐러드 앱 실행 실패', e, stackTrace);
       rethrow;
