@@ -20,6 +20,7 @@ dependencies:
   external_app_launcher: ^4.0.0
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.6
+  fl_chart: ^0.69.0
 
 dev_dependencies:
   flutter_test:
