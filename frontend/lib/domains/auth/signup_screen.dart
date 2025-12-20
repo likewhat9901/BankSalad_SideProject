@@ -1,6 +1,8 @@
 // frontend/lib/domains/auth/signup_screen.dart
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/widgets/common/password_field.dart';
+import '../../core/auth/auth_service.dart';
 import 'widgets/auth_button.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordConfirmController = TextEditingController();
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  final _authService = AuthService();
 
   @override
   void dispose() {
@@ -182,26 +185,52 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      // TODO: 백엔드 API 연결
-      // await AuthApi.signup(
-      //   username: _usernameController.text,
-      //   password: _passwordController.text,
-      //   email: _emailController.text,
-      // );
+      await _authService.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        username: _usernameController.text.trim(),
+      );
 
-      // 임시: 성공 시 로그인 화면으로 이동
-      await Future.delayed(const Duration(seconds: 1));
-      
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('회원가입 성공')),
+        const SnackBar(
+          content: Text('회원가입 성공'),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String errorMessage;
+      switch (e.code) {
+        case 'weak-password':
+          errorMessage = '비밀번호가 너무 약합니다';
+          break;
+        case 'email-already-in-use':
+          errorMessage = '이미 사용 중인 이메일입니다';
+          break;
+        case 'invalid-email':
+          errorMessage = '이메일 형식이 올바르지 않습니다';
+          break;
+        default:
+          errorMessage = '회원가입 실패: ${e.message}';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('회원가입 실패: $e')),
+        SnackBar(
+          content: Text('회원가입 실패: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) {

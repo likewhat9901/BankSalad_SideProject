@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/utils/device/app_launcher_service.dart';
+import '../../core/routing/app_route.dart';
 import '../upload/widgets/excel_upload_button.dart';
-import '../auth/login_screen.dart';
 
 class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidget
   const HomeScreen({super.key});
@@ -48,10 +48,7 @@ class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidge
   Widget _buildLoginButton(BuildContext context) {
     return TextButton.icon(
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
+        Navigator.pushNamed(context, AppRoutes.login);
       },
       icon: const Icon(Icons.login),
       label: const Text('로그인'),

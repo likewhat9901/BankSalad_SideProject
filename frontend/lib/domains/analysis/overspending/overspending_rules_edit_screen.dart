@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../transaction/utils/category_icons.dart';
+import '../../transaction/utils/category_icons.dart';
 
 class OverspendingRuleEditScreen extends StatefulWidget {
   final Map<String, dynamic>? rule;

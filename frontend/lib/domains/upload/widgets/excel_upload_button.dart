@@ -42,7 +42,7 @@ class _ExcelUploadButtonState extends State<ExcelUploadButton> {
       );
 
       if (result == null || result.files.isEmpty) {
-        LoggerService.info('파일 선택 취소됨');
+        LoggerService.info('Upload', '파일 선택 취소됨');
         return;
       }
 
@@ -81,7 +81,7 @@ class _ExcelUploadButtonState extends State<ExcelUploadButton> {
         widget.onUploadSuccess?.call();
       }
     } catch (e) {
-      LoggerService.error('업로드 실패', e);
+      LoggerService.error('Upload', '업로드 실패', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

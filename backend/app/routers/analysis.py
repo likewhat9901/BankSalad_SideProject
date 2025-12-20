@@ -9,6 +9,8 @@ from app.service.overspending_service import (
     update_overspending_rule,
     delete_overspending_rule,
 )
+from app.service.recurring_service import analyze_recurring
+from app.service.time_analysis_service import analyze_time_based_spending
 import calendar
 
 analysis_router = APIRouter(prefix="/analysis", tags=["분석"])
@@ -147,3 +149,30 @@ def delete_overspending_rule_endpoint(rule_id: int):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"규칙 삭제 실패: {str(e)}")
+
+# 반복 소비 패턴 분석
+@analysis_router.get("/recurring")
+def get_recurring_patterns(year: int | None = None, month: int | None = None, min_count: int = 3):
+    """반복 소비 패턴 분석"""
+    try:
+        patterns = analyze_recurring(year=year, month=month, min_count=min_count)
+        return {"count": len(patterns), "patterns": patterns}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"반복 소비 패턴 분석 중 오류 발생: {str(e)}")
+
+# 시간대 소비 분석 (충동 지점)
+@analysis_router.get("/time-analysis")
+def get_time_based_spending(
+    year: int | None = None,
+    month: int | None = None,
+):
+    """시간대 소비 분석 (충동 지점)"""
+    try:
+        patterns = analyze_time_based_spending(year=year, month=month)
+        return {"count": len(patterns), "patterns": patterns}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"시간대 소비 분석 중 오류 발생: {str(e)}")

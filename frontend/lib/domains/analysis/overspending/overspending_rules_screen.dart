@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'analysis_api.dart';
-import '../../core/logger/logger_service.dart';
-import '../../core/utils/formatters/currency_formatter.dart';
-import 'overspending_rules_edit_screen.dart';
+import '../analysis_api.dart';
+import '../../../core/logger/logger_service.dart';
+import '../../../core/utils/formatters/currency_formatter.dart';
+import '../../../core/routing/app_route.dart';
 
 class OverspendingRulesScreen extends StatefulWidget {
   const OverspendingRulesScreen({super.key});
@@ -200,25 +200,23 @@ class _OverspendingRulesScreenState extends State<OverspendingRulesScreen> {
 
   // 이벤트 핸들러
   void _showAddRuleDialog() {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => OverspendingRuleEditScreen(
-          onSave: _handleRuleAdded,
-        ),
-      ),
+      AppRoutes.overspendingRuleEdit,
+      arguments: {
+        'onSave': _handleRuleAdded,
+      },
     );
   }
 
   void _showEditRuleDialog(Map<String, dynamic> rule) {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => OverspendingRuleEditScreen(
-          rule: rule,
-          onSave: (updatedRule) => _handleRuleUpdated(rule, updatedRule),
-        ),
-      ),
+      AppRoutes.overspendingRuleEdit,
+      arguments: {
+        'rule': rule,
+        'onSave': (updatedRule) => _handleRuleUpdated(rule, updatedRule),
+      },
     );
   }
 
@@ -236,7 +234,7 @@ class _OverspendingRulesScreenState extends State<OverspendingRulesScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      LoggerService.error('규칙 로드 실패', e);
+      LoggerService.error('Analysis', '규칙 로드 실패', e);
       setState(() {
         _errorMessage = '규칙을 불러올 수 없습니다';
         _isLoading = false;
@@ -264,7 +262,7 @@ class _OverspendingRulesScreenState extends State<OverspendingRulesScreen> {
         );
       }
     } catch (e) {
-      LoggerService.error('규칙 토글 실패', e);
+      LoggerService.error('Analysis', '규칙 토글 실패', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('규칙 상태 변경에 실패했습니다')),
@@ -307,7 +305,7 @@ class _OverspendingRulesScreenState extends State<OverspendingRulesScreen> {
         );
       }
     } catch (e) {
-      LoggerService.error('규칙 삭제 실패', e);
+      LoggerService.error('Analysis', '규칙 삭제 실패', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('규칙 삭제에 실패했습니다')),
@@ -328,7 +326,7 @@ class _OverspendingRulesScreenState extends State<OverspendingRulesScreen> {
         const SnackBar(content: Text('규칙이 추가되었습니다')),
       );
     } catch (e) {
-      LoggerService.error('규칙 추가 실패', e);
+      LoggerService.error('Analysis', '규칙 추가 실패', e);
       if (!mounted || !context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('규칙 추가에 실패했습니다')),
@@ -354,7 +352,7 @@ class _OverspendingRulesScreenState extends State<OverspendingRulesScreen> {
         const SnackBar(content: Text('규칙이 수정되었습니다')),
       );
     } catch (e) {
-      LoggerService.error('규칙 수정 실패', e);
+      LoggerService.error('Analysis', '규칙 수정 실패', e);
       if (!mounted || !context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('규칙 수정에 실패했습니다')),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/formatters/currency_formatter.dart';
+import '../../../core/routing/app_route.dart';
 import '../transaction.dart';
 import '../utils/category_icons.dart';
-import '../transaction_detail_screen.dart';
 
 /// 거래내역 타일 위젯
 class TransactionTile extends StatelessWidget {
@@ -57,15 +57,10 @@ class TransactionTile extends StatelessWidget {
         isThreeLine: false,
         onTap: () {  // 클릭 이벤트
           // 상세 화면으로 이동 (transaction_detail_screen.dart)
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => TransactionDetailScreen(
-                transaction: transaction,    // 거래내역 데이터
-                onUpdate: onUpdate,    // 수정 후 콜백 함수
-              ),
-            ),
-          ).then((updated) {
+          Navigator.pushNamed(context, AppRoutes.transactionDetail, arguments: {
+            'transaction': transaction,    // 거래내역 데이터
+            'onUpdate': onUpdate,    // 수정 후 콜백 함수
+          }).then((updated) {
             // 수정되었으면 콜백 실행
             if (updated == true) {
               onUpdate?.call();

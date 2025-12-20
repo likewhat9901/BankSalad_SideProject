@@ -1,7 +1,9 @@
 // frontend/lib/domains/auth/login_screen.dart
 import 'package:flutter/material.dart';
-import 'signup_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/routing/app_route.dart';
 import '../../core/widgets/common/password_field.dart';
+import '../../core/auth/auth_service.dart';
 import 'widgets/auth_button.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -13,13 +15,14 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -41,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 40),
                 _buildHeader(),
                 const SizedBox(height: 40),
-                _buildUsernameField(),
+                _buildEmailField(),
                 const SizedBox(height: 16),
                 _buildPasswordField(),
                 const SizedBox(height: 8),
@@ -80,18 +83,22 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildUsernameField() {
+  Widget _buildEmailField() {
     return TextFormField(
-      controller: _usernameController,
+      controller: _emailController,
       decoration: const InputDecoration(
-        labelText: '아이디',
-        hintText: '아이디를 입력하세요',
-        prefixIcon: Icon(Icons.person),
+        labelText: '이메일',
+        hintText: '이메일을 입력하세요',
+        prefixIcon: Icon(Icons.email),
         border: OutlineInputBorder(),
       ),
+      keyboardType: TextInputType.emailAddress,
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return '아이디를 입력하세요';
+          return '이메일을 입력하세요';
+        }
+        if (!value.contains('@')) {
+          return '올바른 이메일 형식이 아닙니다';
         }
         return null;
       },
@@ -124,11 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const Text('|'),
         TextButton(
-          onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('비밀번호 찾기 기능 준비 중')),
-            );
-          },
+          onPressed: _handlePasswordReset,
           child: const Text('비밀번호 찾기'),
         ),
       ],
@@ -150,12 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const Text('계정이 없으신가요? '),
         TextButton(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SignupScreen(),
-              ),
-            );
+            Navigator.pushNamed(context, AppRoutes.signup);
           },
           child: const Text('회원가입'),
         ),
@@ -172,25 +170,57 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // TODO: 백엔드 API 연결
-      // await AuthApi.login(
-      //   username: _usernameController.text,
-      //   password: _passwordController.text,
-      // );
+      await _authService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
-      // 임시: 성공 시 홈으로 이동
-      await Future.delayed(const Duration(seconds: 1));
-      
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인 성공')),
+        const SnackBar(
+          content: Text('로그인 성공'),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = '등록되지 않은 이메일입니다';
+          break;
+        case 'wrong-password':
+          errorMessage = '비밀번호가 잘못되었습니다';
+          break;
+        case 'invalid-email':
+          errorMessage = '이메일 형식이 올바르지 않습니다';
+          break;
+        case 'user-disabled':
+          errorMessage = '비활성화된 계정입니다';
+          break;
+        case 'too-many-requests':
+          errorMessage = '너무 많은 시도가 있었습니다. 나중에 다시 시도해주세요';
+          break;
+        default:
+          errorMessage = '로그인 실패: ${e.message}';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('로그인 실패: $e')),
+        SnackBar(
+          content: Text('로그인 실패: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) {
@@ -198,6 +228,38 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _handlePasswordReset() async {
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('이메일을 입력해주세요'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _authService.resetPassword(_emailController.text.trim());
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('비밀번호 재설정 이메일을 발송했습니다'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('이메일 발송 실패: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }

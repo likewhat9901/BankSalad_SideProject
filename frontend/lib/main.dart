@@ -1,34 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;      // 웹 여부 체크용 상수(kIsWeb)
-import 'package:firebase_core/firebase_core.dart';        // Firebase 초기화
-import 'package:firebase_messaging/firebase_messaging.dart'; // FCM(푸시 알림)
-import 'domains/home/home_screen.dart';                   // 홈 탭 화면
-import 'domains/transaction/transactions_screen.dart';    // 거래내역 탭 화면
-import 'domains/analysis/overspending_screen.dart';       // 과소비 분석 탭 화면
-import 'core/notification/fcm_service.dart';              // FCM 서비스 (백그라운드/포그라운드 처리)
-import 'core/logger/logger_service.dart';                 // 공통 로깅 서비스
+// kIsWeb : Flutter 앱이 웹에서 실행 중인지 알려주는 상수
+import 'core/config/app_theme.dart';                           // 앱 테마
+import 'core/routing/app_route.dart';                           // 앱 라우트
+import 'core/app_initializer.dart';                           // 앱 초기화
 
-// 앱 진입점
+import 'domains/home/home_screen.dart';                       // 홈 탭 화면
+import 'domains/transaction/transactions_screen.dart';        // 거래내역 탭 화면
+import 'domains/analysis/overspending/overspending_screen.dart';           // 과소비 분석 탭 화면
+
+/// 앱 진입점 (async 필수: Firebase 초기화가 비동기이기 때문)
 void main() async {
-  // Flutter 엔진과 위젯 바인딩 초기화 (비동기 초기화 전에 필수)
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // 웹이 아닐 때만 Firebase 초기화
-  if (!kIsWeb) {
-    try {
-      // Firebase 초기화
-      await Firebase.initializeApp();
-
-      // FCM 백그라운드 메시지 핸들러 등록
-      FirebaseMessaging.onBackgroundMessage(FCMService.backgroundHandler);
-      // FCM 초기화
-      await FCMService().init();
-    } catch (e) {
-      // Firebase 초기화 실패해도 앱은 실행
-      LoggerService.error('Firebase 초기화 실패 (웹 환경일 수 있음): $e');
-    }
-  }
-  // Flutter 앱 실행
+  // 앱 초기화 (Firebase 초기화, FCM 초기화 등)
+  await AppInitializer.init();
+  // Flutter 앱 실행 (const -> 같은 인스턴스를 재사용)
   runApp(const MyApp());
 }
 
@@ -38,20 +22,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
+    // Flutter 앱의 뼈대 (라우팅, 테마, 다 여기서 관리)
     return MaterialApp(
-      title: '뱅크샐러드 앱',     // 앱 타이틀 (OS, 히스토리 등에 보일 수 있음)
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF00D4AA), // 뱅크샐러드 민트색
-          brightness: Brightness.light,      // 밝은 테마
-        ),
-        useMaterial3: true,                 // Material3 사용
-        appBarTheme: const AppBarTheme(     // 앱바 테마
-          centerTitle: true,                // 제목 중앙 정렬
-          elevation: 0,                     // 그림자 없음
-        ),
-      ),
-      home: const MainNavigationPage(),    // 메인 네비게이션 페이지
+      title: '뱅크샐러드 앱',     // 앱의 논리적 이름 (OS 앱 목록, 웹 타이틀에 사용)
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
+      initialRoute: AppRoutes.root,
+      routes: {
+        AppRoutes.root: (context) => const MainNavigationPage(),
+      },
+      onGenerateRoute: AppRoutes.generateRoute,
+      navigatorKey: AppRoutes.navigatorKey,
     );
   }
 }
@@ -68,7 +51,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   // 현재 선택된 탭 인덱스 (0: 홈, 1: 거래내역, 2: 과소비 분석)
   int _selectedIndex = 0;
 
-  // 각 탭에서 보여줄 화면들 리스트
+  // 각 탭에서 보여줄 화면들 리스트 (const -> 화면 재사용 가능)
   final List<Widget> _screens = const [
     HomeScreen(),           // 0번 탭: 홈
     TransactionsScreen(),   // 1번 탭: 거래내역
@@ -79,7 +62,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       // 현재 선택된 인덱스에 해당하는 화면을 body 에 표시
-      body: _screens[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
+      // 하단 네비게이션 바 (Material Design 3 스타일)
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,         // 선택된 탭 인덱스
         onDestinationSelected: (index) {      // 탭 변경 콜백 (index: 선택된 탭 인덱스)

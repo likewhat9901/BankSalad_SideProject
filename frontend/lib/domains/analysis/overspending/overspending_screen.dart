@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'overspending_pattern.dart';
-import 'analysis_api.dart';
-import '../../core/logger/logger_service.dart';
-import '../../core/widgets/common/loading_widget.dart';
-import '../../core/widgets/common/error_widget.dart';
-import '../../core/widgets/common/empty_widget.dart';
-import '../transaction/widgets/month_selector.dart';
-import 'overspending_rules_screen.dart';
+import '../analysis_api.dart';
+import '../../../core/logger/logger_service.dart';
+import '../../../core/widgets/common/loading_widget.dart';
+import '../../../core/widgets/common/error_widget.dart';
+import '../../../core/widgets/common/empty_widget.dart';
+import '../../transaction/widgets/month_selector.dart';
+import '../../../core/routing/app_route.dart';
 import 'widgets/overspending_trend_card.dart';
 import 'widgets/overspending_summary_card.dart';
 import 'widgets/overspending_pattern_list.dart';
+import '../recurring/recurring_spending_pattern.dart';
+import '../recurring/widgets/recurring_spending_card.dart';
+import '../time_analysis/time_spending_pattern.dart';
+import '../time_analysis/widgets/time_spending_card.dart';
 
 class OverspendingScreen extends StatefulWidget {
   const OverspendingScreen({super.key});
@@ -30,11 +34,21 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
   bool _isTrendLoading = false;
   TrendPeriod _trendPeriod = TrendPeriod.sixMonths;
 
+  // 반복 소비 패턴 데이터
+  List<RecurringSpendingPattern> _recurringPatterns = [];
+  bool _isRecurringLoading = false;
+
+  // 시간대 소비 패턴 데이터
+  List<TimeSpendingPattern> _timePatterns = [];
+  bool _isTimeAnalysisLoading = false;
+
   @override
   void initState() {
     super.initState();
     _loadData();
     _loadTrend();
+    _loadRecurringPatterns();
+    _loadTimeAnalysis();
   }
 
   @override
@@ -49,6 +63,8 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
             onPressed: () {
               _loadData();
               _loadTrend();
+              _loadRecurringPatterns();
+              _loadTimeAnalysis();
             },
           ),
         ],
@@ -61,8 +77,10 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
       ),
     );
   }
-
-  // 빌드 헬퍼 메서드들
+  
+  // ========== 빌드 헬퍼 메서드들 ==========
+  
+  // 월 선택기 빌드
   Widget _buildMonthSelector() {
     return MonthSelector(
       year: _selectedYear,
@@ -71,7 +89,8 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
       onNext: () => _changeMonth(1),
     );
   }
-
+  
+  // 본문 빌드
   Widget _buildBody() {
     if (isLoading) {
       return const LoadingWidget();
@@ -106,6 +125,7 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
     );
   }
 
+  // 콘텐츠 카드 빌드
   Widget _buildContentCards() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,11 +143,23 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
           patterns: patterns,
           onSettingsPressed: _handleSettingsPressed,
         ),
+        const SizedBox(height: 20),
+        RecurringSpendingCard(
+          patterns: _recurringPatterns,
+          isLoading: _isRecurringLoading,
+        ),
+        const SizedBox(height: 20),
+        TimeSpendingCard(
+          patterns: _timePatterns,
+          isLoading: _isTimeAnalysisLoading,
+          year: _selectedYear,
+          month: _selectedMonth,
+        ),
       ],
     );
   }
 
-  // 이벤트 핸들러
+  // ========== 이벤트 핸들러 ==========
   void _changeMonth(int delta) {
     setState(() {
       _selectedMonth += delta;
@@ -141,8 +173,11 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
     });
     _loadData();
     _loadTrend();
+    _loadRecurringPatterns();
+    _loadTimeAnalysis();
   }
 
+  // 과소비 추이 기간 변경
   void _onTrendPeriodChanged(TrendPeriod period) {
     setState(() {
       _trendPeriod = period;
@@ -150,19 +185,18 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
     _loadTrend();
   }
 
+  // 과소비 규칙 설정 화면 이동
   void _handleSettingsPressed() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const OverspendingRulesScreen(),
-      ),
-    ).then((_) {
-      _loadData();
-      _loadTrend();
-    });
+    Navigator.pushNamed(context, AppRoutes.overspendingRules)
+      .then((_) {
+        _loadData();
+        _loadTrend();
+      });
   }
 
-  // 비즈니스 로직
+  // ========== 비즈니스 로직 ==========
+
+  // 과소비 데이터 로드
   Future<void> _loadData() async {
     setState(() {
       isLoading = true;
@@ -180,7 +214,7 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
         isLoading = false;
       });
     } catch (e) {
-      LoggerService.error('과소비 데이터 로드 실패', e);
+      LoggerService.error('Analysis', '과소비 데이터 로드 실패', e);
       if (!mounted) return;
       setState(() {
         errorMessage = '데이터를 불러올 수 없습니다';
@@ -189,6 +223,7 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
     }
   }
 
+  // 과소비 추이 로드
   Future<void> _loadTrend() async {
     setState(() {
       _isTrendLoading = true;
@@ -224,11 +259,60 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
         _isTrendLoading = false;
       });
     } catch (e, stackTrace) {
-      LoggerService.error('과소비 추이 로드 실패', e, stackTrace);
+      LoggerService.error('Analysis', '과소비 추이 로드 실패', e, stackTrace);
       if (!mounted) return;
       setState(() {
         _trend = [];
         _isTrendLoading = false;
+      });
+    }
+  }
+
+  // 반복 소비 패턴 로드
+  Future<void> _loadRecurringPatterns() async {
+    setState(() => _isRecurringLoading = true);
+
+    try {
+      final result = await AnalysisApi.getRecurringSpendingPatterns(
+        year: _selectedYear,
+        month: _selectedMonth,
+        minCount: 3,  // 최소 3회 이상 반복
+      );
+      if (!mounted) return;
+      setState(() {
+        _recurringPatterns = result;
+        _isRecurringLoading = false;
+      });
+    } catch (e) {
+      LoggerService.error('Analysis', '반복 소비 패턴 로드 실패', e);
+      if (!mounted) return;
+      setState(() {
+        _recurringPatterns = [];
+        _isRecurringLoading = false;
+      });
+    }
+  }
+
+  // 시간대 소비 분석 로드
+  Future<void> _loadTimeAnalysis() async {
+    setState(() => _isTimeAnalysisLoading = true);
+
+    try {
+      final result = await AnalysisApi.getTimeBasedSpending(
+        year: _selectedYear,
+        month: _selectedMonth,
+      );
+      if (!mounted) return;
+      setState(() {
+        _timePatterns = result;
+        _isTimeAnalysisLoading = false;
+      });
+    } catch (e) {
+      LoggerService.error('Analysis', '시간대 소비 분석 로드 실패', e);
+      if (!mounted) return;
+      setState(() {
+        _timePatterns = [];
+        _isTimeAnalysisLoading = false;
       });
     }
   }

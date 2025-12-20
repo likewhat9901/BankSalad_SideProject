@@ -20,7 +20,7 @@ class UploadApi {
       validator.FileValidator.validateFile(filePath, fileName);
     }
 
-    LoggerService.info('파일 업로드 시작: $fileName');
+    LoggerService.info('Upload', '파일 업로드 시작: $fileName');
 
     // 파일 업로드
     final result = await BaseApiClient.postMultipart(
@@ -42,7 +42,7 @@ class UploadApi {
     // 파일 검증
     _validateFileBytes(fileBytes, fileName);
 
-    LoggerService.info('파일 업로드 시작: $fileName');
+    LoggerService.info('Upload', '파일 업로드 시작: $fileName');
 
     // 파일 업로드
     final result = await BaseApiClient.postMultipartBytes(
@@ -76,7 +76,7 @@ class UploadApi {
       throw Exception('파일 크기는 10MB를 초과할 수 없습니다');
     }
 
-    LoggerService.debug('파일 검증 완료: $fileName ($fileSize bytes)');
+    LoggerService.debug('Upload', '파일 검증 완료: $fileName ($fileSize bytes)');
   }
 
   /// 업로드 결과 처리
@@ -89,7 +89,7 @@ class UploadApi {
       throw Exception('파일 업로드 실패: ${result['message'] ?? '알 수 없는 오류'}');
     }
 
-    LoggerService.info('파일 업로드 성공: $fileName');
+    LoggerService.info('Upload', '파일 업로드 성공: $fileName');
     return result;
   }
 }

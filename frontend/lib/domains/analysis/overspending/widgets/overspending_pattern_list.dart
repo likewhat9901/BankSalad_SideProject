@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../overspending_pattern.dart';
-import '../../../core/utils/formatters/currency_formatter.dart';
+import '../../../../core/utils/formatters/currency_formatter.dart';
 
 /// 과소비 패턴 리스트 위젯
 class OverspendingPatternList extends StatelessWidget {

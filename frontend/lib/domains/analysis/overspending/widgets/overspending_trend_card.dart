@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../core/utils/formatters/currency_formatter.dart';
+import '../../../../core/utils/formatters/currency_formatter.dart';
 
 /// 월별 과소비 추이 데이터 포인트
 class MonthlyOverspendingPoint {

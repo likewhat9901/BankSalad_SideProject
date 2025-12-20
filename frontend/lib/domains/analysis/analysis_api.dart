@@ -1,4 +1,6 @@
-import 'overspending_pattern.dart';
+import 'overspending/overspending_pattern.dart';
+import 'recurring/recurring_spending_pattern.dart';
+import 'time_analysis/time_spending_pattern.dart';
 import '../../core/api/api_client.dart';
 
 class AnalysisApi {
@@ -78,5 +80,54 @@ class AnalysisApi {
       '/analysis/rules/$ruleId',
       logMessage: '과소비 규칙 삭제',
     );
+  }
+
+  /// 반복 소비 패턴 분석
+  static Future<List<RecurringSpendingPattern>> getRecurringSpendingPatterns({
+    int? year,
+    int? month,
+    int minCount = 3,  // 최소 반복 횟수
+  }) async {
+    final query = <String, String>{
+      'min_count': minCount.toString(),
+    };
+    if (year != null && month != null) {
+      query['year'] = year.toString();
+      query['month'] = month.toString();
+    }
+
+    final data = await BaseApiClient.get(
+      '/analysis/recurring',
+      queryParams: query,
+      logMessage: '반복 소비 분석 API 요청',
+    );
+
+    final List<dynamic> patternList = data['patterns'] ?? [];
+    return patternList
+        .map((json) => RecurringSpendingPattern.fromJson(json))
+        .toList();
+  }
+
+  /// 시간대 소비 분석 (충동 지점)
+  static Future<List<TimeSpendingPattern>> getTimeBasedSpending({
+    int? year,
+    int? month,
+  }) async {
+    final query = <String, String>{};
+    if (year != null && month != null) {
+      query['year'] = year.toString();
+      query['month'] = month.toString();
+    }
+
+    final data = await BaseApiClient.get(
+      '/analysis/time-analysis',
+      queryParams: query.isEmpty ? null : query,
+      logMessage: '시간대 소비 분석 API 요청',
+    );
+
+    final List<dynamic> patternList = data['patterns'] ?? [];
+    return patternList
+        .map((json) => TimeSpendingPattern.fromJson(json))
+        .toList();
   }
 }

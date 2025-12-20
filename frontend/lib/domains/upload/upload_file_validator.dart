@@ -22,6 +22,6 @@ class FileValidator {
       throw Exception('파일 크기는 10MB를 초과할 수 없습니다');
     }
 
-    LoggerService.debug('파일 검증 완료: $fileName ($fileSize bytes)');
+    LoggerService.debug('Upload', '파일 검증 완료: $fileName ($fileSize bytes)');
   }
 }

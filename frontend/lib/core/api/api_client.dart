@@ -6,17 +6,20 @@ import 'api_config.dart';                      // baseUrl, timeout 설정
 
 // 모든 HTTP 요청을 공통으로 처리하는 클라이언트
 class BaseApiClient {
-    /// GET 요청 공통 처리
+  // ========== 공개 API 메서드 ==========
+
+  /// GET 요청 공통 처리
   static Future<Map<String, dynamic>> get(
     String endpoint, {                        // 예: '/analysis/overspending'
     Map<String, String>? queryParams,         // 쿼리 파라미터 (year, month 등)
     String? logMessage,                       // 로그에 남길 커스텀 메시지
   }) async {
-    // baseUrl + endpoint 로 전체 URI 생성 후, 쿼리 파라미터 추가
-    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint')
-        .replace(queryParameters: queryParams);
+    // 처리 흐름: URI 생성 → GET 요청 → 응답 검증 → JSON 파싱
+    // 에러: 모든 예외는 로깅 후 rethrow
 
-    LoggerService.debug(logMessage ?? 'API 요청: $uri');
+    // URI 생성 (baseUrl + endpoint + 쿼리 파라미터)
+    final uri = _buildUri(endpoint, queryParams: queryParams);
+    LoggerService.debug('API', logMessage ?? 'GET 요청: $uri');
 
     try {
       // GET 요청 보내기 + 타임아웃 설정
@@ -25,22 +28,11 @@ class BaseApiClient {
         onTimeout: () => throw Exception('서버 응답 시간 초과'),
       );
 
-      // 응답 상태코드 로깅
-      LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
-
-      // 200 OK 일 때만 JSON 파싱
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        // 200이 아닌 경우 경고 로그 + 예외
-        LoggerService.warning('API 오류 응답: ${response.statusCode}');
-        LoggerService.debug('응답 본문: ${response.body}');
-        throw Exception('API 호출 실패: ${response.statusCode}');
-      }
+      // 응답 처리 (상태 코드 검증, JSON 파싱, 에러 처리)
+      return _handleResponse(response, [200]);
     } catch (e, stackTrace) {
-      // 네트워크 에러/파싱 에러 등 모든 예외를 로깅 후 재던짐
-      LoggerService.error('API 호출 실패: $uri', e, stackTrace);
-      rethrow;
+      // 모든 예외를 로깅 후 rethrow
+      _handleError(uri, e, stackTrace, 'GET 요청 실패');
     }
   }
 
@@ -50,11 +42,15 @@ class BaseApiClient {
     Map<String, dynamic> body, {  
     String? logMessage,           
   }) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    // 처리 흐름: URI 생성 → JSON 인코딩 → PUT 요청 → 응답 검증(200) → JSON 파싱
+    // 에러: 모든 예외는 로깅 후 rethrow
 
-    LoggerService.debug(logMessage ?? 'API 요청: $uri');
+    // baseUrl + endpoint 로 전체 URI 생성
+    final uri = _buildUri(endpoint);
+    LoggerService.debug('API', logMessage ?? 'PUT 요청: $uri');
 
     try {
+      // PUT 요청 보내기 + 타임아웃 설정
       final response = await http.put(
         uri,
         headers: {'Content-Type': 'application/json'},
@@ -64,18 +60,11 @@ class BaseApiClient {
         onTimeout: () => throw Exception('서버 응답 시간 초과'),
       );
 
-      LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        LoggerService.warning('API 오류 응답: ${response.statusCode}');
-        LoggerService.debug('응답 본문: ${response.body}');
-        throw Exception('API 호출 실패: ${response.statusCode}');
-      }
+      // 응답 처리 (상태 코드 검증, JSON 파싱, 에러 처리)
+      return _handleResponse(response, [200]);
     } catch (e, stackTrace) {
-      LoggerService.error('API 호출 실패: $uri', e, stackTrace);
-      rethrow;
+      // 모든 예외를 로깅 후 rethrow
+      _handleError(uri, e, stackTrace, 'PUT 요청 실패');
     }
   }
 
@@ -85,11 +74,15 @@ class BaseApiClient {
     Map<String, dynamic> body, {
     String? logMessage,
   }) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    // 처리 흐름: URI 생성 → JSON 인코딩 → POST 요청 → 응답 검증(200/201) → JSON 파싱
+    // 에러: 모든 예외는 로깅 후 rethrow
 
-    LoggerService.debug(logMessage ?? 'API 요청: $uri');
+    // baseUrl + endpoint 로 전체 URI 생성
+    final uri = _buildUri(endpoint);
+    LoggerService.debug('API', logMessage ?? 'POST 요청: $uri');
 
     try {
+      // POST 요청 보내기 + 타임아웃 설정
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
@@ -99,39 +92,43 @@ class BaseApiClient {
         onTimeout: () => throw Exception('서버 응답 시간 초과'),
       );
 
-      LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        LoggerService.warning('API 오류 응답: ${response.statusCode}');
-        LoggerService.debug('응답 본문: ${response.body}');
-        throw Exception('API 호출 실패: ${response.statusCode}');
-      }
+      // 응답 처리 (상태 코드 검증, JSON 파싱, 에러 처리)
+      return _handleResponse(response, [200, 201]);
     } catch (e, stackTrace) {
-      LoggerService.error('API 호출 실패: $uri', e, stackTrace);
-      rethrow;
+      // 모든 예외를 로깅 후 rethrow
+      _handleError(uri, e, stackTrace, 'POST 요청 실패');
     }
   }
 
-  /// POST (Multipart) 요청 공통 처리
+  /// POST (Multipart) 요청 공통 처리 (모바일용 - 파일 경로 사용)
   static Future<Map<String, dynamic>> postMultipart(
-    String endpoint,
+    String endpoint,                          // 예: '/upload/excel'
     String filePath,                          // 업로드할 파일 경로
     String fileName, {                        // 서버/로그에 남길 파일명
-    String? logMessage,
-    Map<String, String>? fields,             // 추가로 전송할 폼 필드 (옵션)
+    String? logMessage,                       // 로그에 남길 커스텀 메시지
+    Map<String, String>? fields,              // 추가로 전송할 폼 필드 (옵션)
   }) async {
-    // URI를 내부에서 생성
-    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    // 처리 흐름: URI 생성 → MultipartRequest 생성(POST, URI) → 파일 추가(file, 파일 경로, 파일명) 
+    //  → 추가 필드 추가 → 요청 전송 → 응답 검증(200) → JSON 파싱
+    // 에러: 모든 예외는 로깅 후 rethrow
+    // 주의: 모바일 플랫폼용 (웹은 postMultipartBytes 사용)
 
-    LoggerService.debug(logMessage ?? 'Multipart API 요청: $uri');
+    // baseUrl + endpoint 로 전체 URI 생성
+    final uri = _buildUri(endpoint);
+    LoggerService.debug('API', logMessage ?? 'Multipart POST 요청: $uri');
 
     try {
-      // MultipartRequest 생성 시 URI를 올바르게 설정
+      // MultipartRequest 생성(POST, URI)
       final request = http.MultipartRequest('POST', uri);
-      request.files
-          .add(await http.MultipartFile.fromPath('file', filePath, filename: fileName));
+      // 파일 추가(file, 파일 경로, 파일명)
+      request.files.add(
+        // 파일 경로로 MultipartFile 생성
+        await http.MultipartFile.fromPath(
+          'file',
+          filePath,
+          filename: fileName,
+        ),
+      );
 
       // 추가 필드가 있으면 추가
       if (fields != null) {
@@ -142,37 +139,36 @@ class BaseApiClient {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        LoggerService.error('API 오류 응답: ${response.statusCode}');
-        LoggerService.error('응답 본문: ${response.body}');
-        throw Exception('Multipart 요청 실패: ${response.statusCode}');
-      }
+      // 응답 처리 (상태 코드 검증, JSON 파싱, 에러 처리)
+      return _handleResponse(response, [200]);
     } catch (e, stackTrace) {
-      LoggerService.error('Multipart 요청 실패: $uri', e, stackTrace);
-      rethrow;
+      // 네트워크 에러/파싱 에러 등 모든 예외를 로깅 후 rethrow
+      _handleError(uri, e, stackTrace, 'Multipart POST 요청 실패');
     }
   }
 
   /// POST (Multipart) 요청 공통 처리 (웹용 - 바이트 사용)
   static Future<Map<String, dynamic>> postMultipartBytes(
-    String endpoint,
-    Uint8List fileBytes,
-    String fileName, {
-    String? logMessage,
-    Map<String, String>? fields,
+    String endpoint,                           // 예: '/upload/excel'
+    Uint8List fileBytes,                       // 업로드할 파일 바이트
+    String fileName, {                         // 서버/로그에 남길 파일명
+    String? logMessage,                        // 로그에 남길 커스텀 메시지
+    Map<String, String>? fields,               // 추가로 전송할 폼 필드 (옵션)
   }) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    // 처리 흐름: URI 생성 → MultipartRequest 생성(POST, URI) → 파일 추가(file, 파일 바이트, 파일명) 
+    //  → 추가 필드 추가 → 요청 전송 → 응답 검증(200) → JSON 파싱
+    // 에러: 모든 예외는 로깅 후 rethrow
+    // 주의: 웹 플랫폼용 (모바일은 postMultipart 사용)
 
-    LoggerService.debug(logMessage ?? 'Multipart API 요청: $uri');
+    // baseUrl + endpoint 로 전체 URI 생성
+    final uri = _buildUri(endpoint);
+
+    LoggerService.debug('API', logMessage ?? 'Multipart POST 요청: $uri');
 
     try {
+      // MultipartRequest 생성(POST, URI)
       final request = http.MultipartRequest('POST', uri);
-      
-      // 바이트로 MultipartFile 생성
+      // 바이트로 MultipartFile 생성(file, 파일 바이트, 파일명)
       request.files.add(
         http.MultipartFile.fromBytes(
           'file',
@@ -190,18 +186,11 @@ class BaseApiClient {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        LoggerService.error('API 오류 응답: ${response.statusCode}');
-        LoggerService.error('응답 본문: ${response.body}');
-        throw Exception('Multipart 요청 실패: ${response.statusCode}');
-      }
+      // 응답 처리 (상태 코드 검증, JSON 파싱, 에러 처리)
+      return _handleResponse(response, [200]);
     } catch (e, stackTrace) {
-      LoggerService.error('Multipart 요청 실패: $uri', e, stackTrace);
-      rethrow;
+      // 네트워크 에러/파싱 에러 등 모든 예외를 로깅 후 rethrow
+      _handleError(uri, e, stackTrace, 'Multipart POST 요청 실패');
     }
   }
 
@@ -210,26 +199,73 @@ class BaseApiClient {
     String endpoint, {
     String? logMessage,
   }) async {
-    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    // 처리 흐름: URI 생성 → DELETE 요청 → 응답 검증(200/204) → void 반환
+    // 에러: 모든 예외는 로깅 후 rethrow
 
-    LoggerService.debug(logMessage ?? 'API 요청: $uri');
+    // baseUrl + endpoint 로 전체 URI 생성
+    final uri = _buildUri(endpoint);
+
+    LoggerService.debug('API', logMessage ?? 'DELETE 요청: $uri');
 
     try {
+      // DELETE 요청 보내기 + 타임아웃 설정
       final response = await http.delete(uri).timeout(
         ApiConfig.timeout,
         onTimeout: () => throw Exception('서버 응답 시간 초과'),
       );
 
-      LoggerService.info('응답 수신 - 상태코드: ${response.statusCode}');
-
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        LoggerService.warning('API 오류 응답: ${response.statusCode}');
-        LoggerService.debug('응답 본문: ${response.body}');
-        throw Exception('API 호출 실패: ${response.statusCode}');
-      }
+      // 응답 처리 (상태 코드 검증, JSON 파싱, 에러 처리)
+      _handleResponse(response, [200, 204], parseJson: false);
     } catch (e, stackTrace) {
-      LoggerService.error('API 호출 실패: $uri', e, stackTrace);
-      rethrow;
+      // 네트워크 에러/파싱 에러 등 모든 예외를 로깅 후 rethrow
+      _handleError(uri, e, stackTrace, 'DELETE 요청 실패');
     }
   }
+
+  // ========== 공통 헬퍼 메서드 ==========
+
+  /// URI 생성 (baseUrl + endpoint + 쿼리 파라미터)
+  static Uri _buildUri(
+    String endpoint, {
+    Map<String, String>? queryParams,
+  }) {
+    final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+    if (queryParams != null) {
+      return uri.replace(queryParameters: queryParams);
+    }
+    return uri;
+  }
+
+  /// 응답 처리 (상태 코드 검증, JSON 파싱, 에러 처리)
+  static Map<String, dynamic> _handleResponse(
+    http.Response response,
+    List<int> successCodes, {
+    bool parseJson = true,
+  }) {
+    LoggerService.info('API', '응답 수신 - 상태코드: ${response.statusCode}');
+
+    if (successCodes.contains(response.statusCode)) {
+      if (parseJson) {
+        return json.decode(response.body);
+      }
+      return {};
+    } else {
+      LoggerService.warning('API', 'API 오류 응답: ${response.statusCode}');
+      LoggerService.warning('API', '응답 본문: ${response.body}');
+      throw Exception('API 호출 실패: ${response.statusCode}');
+    }
+  }
+
+  /// 에러 처리 (로깅 후 rethrow)
+  static Never _handleError(
+    Uri uri,
+    dynamic e,
+    StackTrace stackTrace,
+    String errorPrefix,
+  ) {
+    LoggerService.error('API', '$errorPrefix: $uri', e, stackTrace);
+    throw e;
+  }
+
+  
 }

@@ -1,10 +1,9 @@
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart';        // 숫자, 날짜를 국가별 포맷으로 변환하는 플러그인
 
-/// 통화 포맷팅 유틸리티
-/// 프로젝트 전역에서 사용하는 통화 포맷팅을 중앙화합니다.
+// ========== 통화 포맷팅 유틸리티 ==========
 class CurrencyFormatter {
-  // 싱글톤 패턴으로 NumberFormat 인스턴스 재사용
-  static final NumberFormat _formatter = NumberFormat('#,###', 'ko_KR');
+  /// NumberFormat 인스턴스 (정적 공유 객체)
+  static final NumberFormat _formatter = NumberFormat('#,###', 'ko_KR'); // 3자리마다 콤마, 한국 로케일 기준
 
   /// 금액을 포맷팅합니다.
   /// 예: 10000 -> "10,000"
@@ -18,7 +17,7 @@ class CurrencyFormatter {
     return '${format(amount)}원';
   }
 
-  /// 금액을 부호와 함께 포맷팅합니다.
+  /// 금액을 '원' 단위와 부호와 함께 포맷팅합니다.
   /// 예: -10000 -> "-10,000원", 10000 -> "+10,000원"
   static String formatWithSign(int amount) {
     final sign = amount < 0 ? '-' : '+';
