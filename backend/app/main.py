@@ -15,15 +15,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# 환경 변수에서 허용할 origin 가져오기 (배포용)
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+# 환경 변수에서 허용할 origin 가져오기
+ALLOWED_ORIGINS_ENV = os.getenv("ALLOWED_ORIGINS", "")
+if ALLOWED_ORIGINS_ENV:
+    # 환경 변수가 있으면 콤마로 분리
+    ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_ENV.split(",")]
+else:
+    # 환경 변수가 없으면 기본값 (개발용)
+    ALLOWED_ORIGINS = ["*"]
 
 # Flutter 앱에서 호출할 수 있도록 CORS 설정
 app.add_middleware(
     CORSMiddleware,
     # TODO: 프로덕션 배포 시 특정 도메인으로 제한
     allow_origins=ALLOWED_ORIGINS,  # 개발 중에는 전체 허용
-    allow_credentials=True,
+    allow_credentials=ALLOWED_ORIGINS != ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
