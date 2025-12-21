@@ -21,9 +21,9 @@ if ALLOWED_ORIGINS_ENV:
     # 환경 변수가 있으면 콤마로 분리
     ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_ENV.split(",")]
     localhost_origins = [
-        "http://localhost:13793",
+        "http://localhost:10429",
         "http://localhost:8000",
-        "http://127.0.0.1:13793",
+        "http://127.0.0.1:10429",
         "http://127.0.0.1:8000",
     ]
     for origin in localhost_origins:
