@@ -8,9 +8,6 @@ import 'logger/logger_service.dart';
 
 class AppInitializer {
   static Future<void> init() async {
-    // Flutter 엔진과 위젯 시스템을 먼저 준비 (비동기 초기화(await Firebase.initializeApp()) 전에 필수)
-    // 없으면 크래시 or 알 수 없는 에러
-    WidgetsFlutterBinding.ensureInitialized();
 
     // 웹이 아니면 Firebase/FCM 초기화
     if (!kIsWeb) {

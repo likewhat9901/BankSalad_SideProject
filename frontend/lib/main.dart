@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
+import 'core/config/env.dart';
 // kIsWeb : Flutter 앱이 웹에서 실행 중인지 알려주는 상수
 import 'core/config/app_theme.dart';                           // 앱 테마
 import 'core/routing/app_route.dart';                           // 앱 라우트
 import 'core/app_initializer.dart';                           // 앱 초기화
+import 'core/error/error_handler.dart';                        // 전역 에러 핸들러
 
 import 'domains/home/home_screen.dart';                       // 홈 탭 화면
 import 'domains/transaction/transactions_screen.dart';        // 거래내역 탭 화면
@@ -10,6 +13,25 @@ import 'domains/analysis/overspending/overspending_screen.dart';           // �
 
 /// 앱 진입점 (async 필수: Firebase 초기화가 비동기이기 때문)
 void main() async {
+
+  // ========== 브라우저 콘솔 테스트 로그 ==========
+  if (kIsWeb) {
+    print('🚀🚀🚀 앱 시작 - 브라우저 콘솔 테스트 🚀🚀🚀');
+    print('📍 print() 테스트 - 이 메시지가 보이면 print() 작동함');
+    debugPrint('📍 debugPrint() 테스트 - 이 메시지가 보이면 debugPrint() 작동함');
+    print('📍 kIsWeb: $kIsWeb');
+    print('📍 kDebugMode: $kDebugMode');
+    print('📍 Env.environment: ${Env.environment}');
+    print('🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀');
+  }
+
+  // Flutter 엔진과 위젯 시스템을 먼저 준비 (비동기 초기화(await Firebase.initializeApp()) 전에 필수)
+  // 없으면 크래시 or 알 수 없는 에러
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 전역 에러 핸들러 설정
+  ErrorHandler.setupAll();
+
   // 앱 초기화 (Firebase 초기화, FCM 초기화 등)
   await AppInitializer.init();
   // Flutter 앱 실행 (const -> 같은 인스턴스를 재사용)

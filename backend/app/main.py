@@ -20,6 +20,8 @@ ALLOWED_ORIGINS_ENV = os.getenv("ALLOWED_ORIGINS", "")
 if ALLOWED_ORIGINS_ENV:
     # 환경 변수가 있으면 콤마로 분리
     ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_ENV.split(",")]
+    # localhost는 항상 허용 (개발 편의성)
+    ALLOWED_ORIGINS.append("http://localhost:*")
 else:
     # 환경 변수가 없으면 기본값 (개발용)
     ALLOWED_ORIGINS = ["*"]

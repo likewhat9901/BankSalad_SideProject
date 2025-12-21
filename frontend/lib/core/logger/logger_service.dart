@@ -1,6 +1,5 @@
 import 'package:logger/logger.dart';
 import 'package:flutter/foundation.dart';
-import '../config/env.dart';
 
 class LoggerService {
   static final Logger _logger = Logger(
@@ -17,8 +16,8 @@ class LoggerService {
           colors: true,
           printTime: true,
         ),
-    level: Env.environment == 'production' 
-      ? Level.warning  // 프로덕션: warning 이상만
+    level: kIsWeb
+      ? Level.debug  // 프로덕션: warning 이상만
       : Level.debug,   // 개발: 모든 로그
     output: kIsWeb ? _WebOutput() : null, // 웹 전용 출력
   );
@@ -46,11 +45,13 @@ class LoggerService {
 class _WebOutput extends LogOutput {
   @override
   void output(OutputEvent event) {
-    // 운영(release) 웹에서는 콘솔 출력 최소화
-    if (kReleaseMode) return;
-
+    // 웹에서는 모든 로그를 브라우저 콘솔에 출력
     for (final line in event.lines) {
+      // debugPrint도 함께 사용 (Flutter DevTools에서도 보임)
       debugPrint(line);
+      
+      // print()로 브라우저 콘솔에 확실히 출력
+      print(line);
     }
   }
 }

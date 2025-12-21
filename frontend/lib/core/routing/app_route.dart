@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../domains/auth/login_screen.dart';
 import '../../domains/auth/signup_screen.dart';
 import '../../domains/transaction/transaction.dart';
@@ -6,6 +7,8 @@ import '../../domains/transaction/transaction_detail_screen.dart';
 import '../../domains/analysis/overspending/overspending_rules_screen.dart';
 import '../../domains/analysis/overspending/overspending_rules_edit_screen.dart';
 import '../../domains/transaction/filtered_transactions_screen.dart';
+import '../logger/logger_service.dart';
+import '../error/error_handler.dart';
 
 class AppRoutes {
   static const String root = '/';
@@ -40,59 +43,92 @@ class AppRoutes {
 
   /// 라우트 생성 함수 (context 필수)
   static Route<dynamic>? generateRoute(RouteSettings settings) {
-    switch (settings.name) {
-      case login:
-        return _page(const LoginScreen());
+    try {
+      switch (settings.name) {
+        case login:
+          return _page(const LoginScreen());
 
-      case signup:
-        return _page(const SignupScreen());
+        case signup:
+          return _page(const SignupScreen());
 
-      case transactionDetail:
-        final args = settings.arguments as Map<String, dynamic>?;
-        if (args == null) {
-          return _error('거래내역 정보가 없습니다');
-        }
+        case transactionDetail:
+          final args = settings.arguments as Map<String, dynamic>?;
+          if (args == null) {
+            return _error('거래내역 정보가 없습니다');
+          }
 
-        final transaction = args['transaction'];
-        if (transaction == null) {
-          return _error('거래내역 정보가 없습니다');
-        }
+          final transaction = args['transaction'];
+          if (transaction == null) {
+            return _error('거래내역 정보가 없습니다');
+          }
 
-        if (transaction is! Transaction) {
-          return _error('거래내역 데이터 형식이 올바르지 않습니다');
-        }
+          if (transaction is! Transaction) {
+            return _error('거래내역 데이터 형식이 올바르지 않습니다');
+          }
 
-        return _page(TransactionDetailScreen(
-          transaction: transaction,
-          onUpdate: args['onUpdate'] as VoidCallback?,
-        ));
+          return _page(TransactionDetailScreen(
+            transaction: transaction,
+            onUpdate: args['onUpdate'] as VoidCallback?,
+          ));
+        
+        case filteredTransactions:
+          final args = settings.arguments as Map<String, dynamic>?;
+          if (args == null) {
+            return _error('필터 정보가 없습니다');
+          }
+          final title = args['title'];
+          final filters = args['filters'];
+          
+          if (title == null || title is! String) {
+            return _error('제목 정보가 올바르지 않습니다');
+          }
+          
+          if (filters == null || filters is! Map<String, dynamic>) {
+            return _error('필터 정보가 올바르지 않습니다');
+          }
+          return _page(FilteredTransactionsScreen(
+            title: title,
+            filters: filters,
+          ));
+
+        case overspendingRules:
+          return _page(const OverspendingRulesScreen());
+
+        case overspendingRuleEdit:
+          final args = settings.arguments as Map<String, dynamic>?;
+          final onSave = args?['onSave'] as Function(Map<String, dynamic>)?;
+          if (onSave == null) {
+            return _error('onSave 콜백이 필요합니다');
+          }
+          return _page(OverspendingRuleEditScreen(
+            rule: args?['rule'] as Map<String, dynamic>?,
+            onSave: onSave,
+          ));
+
+        default:
+          return _error('페이지를 찾을 수 없습니다');
+      }
+    } catch (e, stackTrace) {
+      // 라우트 생성 중 에러 발생 시 로그 출력
+      LoggerService.error(
+        'Routing',
+        '라우트 생성 실패: ${settings.name}',
+        e,
+        stackTrace,
+      );
       
-      case filteredTransactions:
-        final args = settings.arguments as Map<String, dynamic>?;
-        if (args == null) {
-          return _error('필터 정보가 없습니다');
-        }
-        return _page(FilteredTransactionsScreen(
-          title: args['title'] as String,
-          filters: args['filters'] as Map<String, dynamic>,
-        ));
-
-      case overspendingRules:
-        return _page(const OverspendingRulesScreen());
-
-      case overspendingRuleEdit:
-        final args = settings.arguments as Map<String, dynamic>?;
-        final onSave = args?['onSave'] as Function(Map<String, dynamic>)?;
-        if (onSave == null) {
-          return _error('onSave 콜백이 필요합니다');
-        }
-        return _page(OverspendingRuleEditScreen(
-          rule: args?['rule'] as Map<String, dynamic>?,
-          onSave: onSave,
-        ));
-
-      default:
-        return _error('페이지를 찾을 수 없습니다');
+      // 웹에서는 콘솔에 상세 정보 출력
+      if (kIsWeb) {
+        ErrorHandler.printWebError(
+          'RoutingError',
+          e.toString(),
+          'app_route.dart',
+          'Route: ${settings.name}, Args: ${settings.arguments}',
+          stackTrace.toString(),
+        );
+      }
+      
+      return _error('페이지를 불러올 수 없습니다: $e');
     }
   }
 }

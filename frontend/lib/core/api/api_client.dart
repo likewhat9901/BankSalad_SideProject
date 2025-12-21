@@ -3,6 +3,7 @@ import 'dart:typed_data';                      // 바이트 배열(Uint8List) �
 import 'package:http/http.dart' as http;       // HTTP 클라이언트 패키지
 import '../logger/logger_service.dart';        // 공통 로거
 import 'api_config.dart';                      // baseUrl, timeout 설정
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 모든 HTTP 요청을 공통으로 처리하는 클라이언트
 class BaseApiClient {
@@ -112,6 +113,10 @@ class BaseApiClient {
     //  → 추가 필드 추가 → 요청 전송 → 응답 검증(200) → JSON 파싱
     // 에러: 모든 예외는 로깅 후 rethrow
     // 주의: 모바일 플랫폼용 (웹은 postMultipartBytes 사용)
+
+    if (kIsWeb) {
+      throw UnsupportedError('postMultipart는 웹에서 사용할 수 없습니다. postMultipartBytes를 사용하세요.');
+    }
 
     // baseUrl + endpoint 로 전체 URI 생성
     final uri = _buildUri(endpoint);
@@ -246,7 +251,13 @@ class BaseApiClient {
 
     if (successCodes.contains(response.statusCode)) {
       if (parseJson) {
-        return json.decode(response.body);
+        try {
+          return json.decode(response.body);
+        } catch (e) {
+          // 웹에서 JSON 파싱 실패 시 더 명확한 에러 메시지
+          LoggerService.error('API', 'JSON 파싱 실패: ${response.body.substring(0, 100)}', e);
+          throw Exception('서버 응답을 파싱할 수 없습니다: $e');
+        }
       }
       return {};
     } else {

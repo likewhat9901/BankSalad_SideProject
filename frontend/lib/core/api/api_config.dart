@@ -27,9 +27,11 @@ class ApiConfig {
   /// baseUrl 가져오기 (우선순위: 환경 변수 > 웹 환경 > Debug/Release 모드)
   static String get baseUrl {
     // 1순위: 환경 변수로 강제 지정된 경우
-    final apiUrlFromEnv = Env.getString('API_URL');
-    if (apiUrlFromEnv.isNotEmpty) {
-      return apiUrlFromEnv;
+    if (!kIsWeb) {
+      final apiUrlFromEnv = Env.getString('API_URL');
+      if (apiUrlFromEnv.isNotEmpty) {
+        return apiUrlFromEnv;
+      }
     }
 
     // 2순위: 웹 환경은 항상 프로덕션 서버 사용
