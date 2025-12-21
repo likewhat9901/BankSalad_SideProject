@@ -2,9 +2,31 @@ import 'package:flutter/material.dart';
 import '../../core/utils/device/app_launcher_service.dart';
 import '../../core/routing/app_route.dart';
 import '../upload/widgets/excel_upload_button.dart';
+import '../personality/spending_personality_api.dart';
+import '../personality/spending_personality.dart';
+import '../personality/widgets/spending_personality_card.dart';
+import '../../core/logger/logger_service.dart';
+import '../../core/widgets/common/loading_widget.dart';
+import '../../core/widgets/common/error_widget.dart';
 
-class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidget
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  SpendingPersonality? _personality;
+  bool _isLoadingPersonality = false;
+  String? _personalityError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPersonality();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,31 +35,59 @@ class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidge
         title: const Text('뱅크드레싱'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
-          // 로그인 버튼 추가
           _buildLoginButton(context),
         ],
       ),
-      body: Center(
+      body: SingleChildScrollView(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildLogo(),
-            const SizedBox(height: 24),
-            Text(
-              '뱅크샐러드 보조도구 입니다.',
-              style: Theme.of(context).textTheme.headlineSmall,
+            const SizedBox(height: 64),
+            // 기존 콘텐츠
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildLogo(),
+                  const SizedBox(height: 24),
+                  Text(
+                    '뱅크샐러드 보조도구 입니다.',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('뱅크샐러드 앱에서 엑셀파일을 다운로드 해주세요.'),
+                  const SizedBox(height: 32),
+                  _buildBankSaladButton(),
+                  const SizedBox(height: 16),
+                  ExcelUploadButton(
+                    onUploadSuccess: () {
+                      // 업로드 성공 시 소비 성향 다시 로드
+                      _loadPersonality();
+                    },
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            const Text('뱅크샐러드 앱에서 엑셀파일을 다운로드 해주세요.'),
-            const SizedBox(height: 32),
-            _buildBankSaladButton(),
-            const SizedBox(height: 16),  // 추가: 버튼 사이 여백
-            ExcelUploadButton(  // 추가: 엑셀 파일 업로드 버튼
-              onUploadSuccess: () {
-                // 업로드 성공 시 할 일 (선택사항)
-                // 예: 거래내역 화면으로 이동하거나 메시지 표시
-              },
-            ),
+            const SizedBox(height: 16),
+            // 소비 성향 카드
+            if (_isLoadingPersonality)
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: LoadingWidget(),
+              )
+            else if (_personalityError != null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: ErrorStateWidget(
+                  message: _personalityError!,
+                  onRetry: _loadPersonality,
+                ),
+              )
+            else if (_personality != null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SpendingPersonalityCard(personality: _personality!),
+              ),
           ],
         ),
       ),
@@ -93,5 +143,28 @@ class HomeScreen extends StatelessWidget {  // StatefulWidget → StatelessWidge
         ],
       ),
     );
+  }
+
+  Future<void> _loadPersonality() async {
+    setState(() {
+      _isLoadingPersonality = true;
+      _personalityError = null;
+    });
+
+    try {
+      final personality = await SpendingPersonalityApi.getSpendingPersonality();
+      if (!mounted) return;
+      setState(() {
+        _personality = personality;
+        _isLoadingPersonality = false;
+      });
+    } catch (e) {
+      LoggerService.error('Home', '소비 성향 로드 실패', e);
+      if (!mounted) return;
+      setState(() {
+        _personalityError = '소비 성향을 불러올 수 없습니다';
+        _isLoadingPersonality = false;
+      });
+    }
   }
 }

@@ -7,9 +7,6 @@ class Env {
 
   /// 환경 변수 읽기 (String)
   static String getString(String key, {String defaultValue = ''}) {
-    if (kIsWeb) {
-      return defaultValue;
-    }
     return String.fromEnvironment(key, defaultValue: defaultValue);
   }
   

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query
 
-from app.service.stats_service import get_monthly_stats
+from app.service.data.stats_service import get_monthly_stats
 
 stats_router = APIRouter(prefix="/stats", tags=["통계"])
 

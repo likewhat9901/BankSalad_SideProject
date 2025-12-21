@@ -1,6 +1,5 @@
 import 'package:url_launcher/url_launcher.dart';        // 외부 앱 실행 / 웹 링크 열기용 플러그인
 import '../../logger/logger_service.dart';              // 로깅 서비스
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AppLauncherService {
   // ========== 뱅크샐러드 패키지 정보 ==========
@@ -15,16 +14,6 @@ class AppLauncherService {
   // ========== 뱅크샐러드 앱 열기 ==========
   static Future<void> openBankSalad() async {
     LoggerService.info('AppLauncher', '뱅크샐러드 앱 실행 시도');
-
-    if (kIsWeb) {
-      final webUri = Uri.parse(_playStoreUrl);
-      if (await canLaunchUrl(webUri)) {
-        await launchUrl(webUri, mode: LaunchMode.externalApplication);
-        LoggerService.info('AppLauncher', '플레이스토어 링크로 이동');
-        return;
-      }
-      throw Exception('링크를 열 수 없습니다');
-    }
     
     try {
       // 먼저 market:// 링크 시도 (앱이 설치되어 있으면 앱 열기)

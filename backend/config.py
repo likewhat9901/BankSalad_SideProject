@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from datetime import datetime
 
 # === 프로젝트 이름 ===
 PROJECT_NAME = "backend"
@@ -20,6 +19,7 @@ if not IS_DEPLOYMENT and BASE_DIR.name != PROJECT_NAME:
     )
 
 # === 디렉토리 경로 ===
+APP_DIR = BASE_DIR / "app"
 RES_DATA_DIR = BASE_DIR / "resData"
 DATA_DIR = BASE_DIR / "data"
 PARSE_DIR = BASE_DIR / "parse"

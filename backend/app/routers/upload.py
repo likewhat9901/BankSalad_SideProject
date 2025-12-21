@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from logger import setup_logger
 
-from app.service.upload_service import excel_to_parquet
+from app.service.data.upload_service import excel_to_parquet
 from config import RES_DATA_DIR
 
 logger = setup_logger(__name__) 

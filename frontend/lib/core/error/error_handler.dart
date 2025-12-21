@@ -18,17 +18,6 @@ class ErrorHandler {
         details.exception,
         details.stack,
       );
-      
-      // 웹에서는 콘솔에 상세 정보 출력
-      if (kIsWeb) {
-        printWebError(
-          'FlutterError',
-          details.exception.toString(),
-          details.library,
-          details.context?.toString(),
-          details.stack?.toString(),
-        );
-      }
     };
   }
   
@@ -41,18 +30,6 @@ class ErrorHandler {
         error,
         stack,
       );
-      
-      // 웹에서는 콘솔에 출력
-      if (kIsWeb) {
-        printWebError(
-          'PlatformError',
-          error.toString(),
-          null,
-          null,
-          stack?.toString(),
-        );
-      }
-      
       return true; // 에러 처리 완료
     };
   }
@@ -61,27 +38,5 @@ class ErrorHandler {
   static void setupAll() {
     setupFlutterErrorHandler();
     setupPlatformErrorHandler();
-  }
-  
-  /// 웹 콘솔에 에러 출력 (포맷팅)
-  static void printWebError(  // _printWebError → printWebError
-    String type,
-    String error,
-    String? library,
-    String? context,
-    String? stack,
-  ) {
-    print('❌❌❌ $type 발생 ❌❌❌');
-    print('📍 Error: $error');
-    if (library != null) {
-      print('📍 Library: $library');
-    }
-    if (context != null) {
-      print('📍 Context: $context');
-    }
-    if (stack != null) {
-      print('📍 Stack: $stack');
-    }
-    print('❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌');
   }
 }

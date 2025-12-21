@@ -1,9 +1,7 @@
 import 'dart:convert';                         // JSON 인코딩/디코딩용
-import 'dart:typed_data';                      // 바이트 배열(Uint8List) 타입
 import 'package:http/http.dart' as http;       // HTTP 클라이언트 패키지
 import '../logger/logger_service.dart';        // 공통 로거
 import 'api_config.dart';                      // baseUrl, timeout 설정
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 // 모든 HTTP 요청을 공통으로 처리하는 클라이언트
 class BaseApiClient {
@@ -112,11 +110,6 @@ class BaseApiClient {
     // 처리 흐름: URI 생성 → MultipartRequest 생성(POST, URI) → 파일 추가(file, 파일 경로, 파일명) 
     //  → 추가 필드 추가 → 요청 전송 → 응답 검증(200) → JSON 파싱
     // 에러: 모든 예외는 로깅 후 rethrow
-    // 주의: 모바일 플랫폼용 (웹은 postMultipartBytes 사용)
-
-    if (kIsWeb) {
-      throw UnsupportedError('postMultipart는 웹에서 사용할 수 없습니다. postMultipartBytes를 사용하세요.');
-    }
 
     // baseUrl + endpoint 로 전체 URI 생성
     final uri = _buildUri(endpoint);
@@ -131,53 +124,6 @@ class BaseApiClient {
         await http.MultipartFile.fromPath(
           'file',
           filePath,
-          filename: fileName,
-        ),
-      );
-
-      // 추가 필드가 있으면 추가
-      if (fields != null) {
-        request.fields.addAll(fields);
-      }
-
-      // 요청 전송
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      // 응답 처리 (상태 코드 검증, JSON 파싱, 에러 처리)
-      return _handleResponse(response, [200]);
-    } catch (e, stackTrace) {
-      // 네트워크 에러/파싱 에러 등 모든 예외를 로깅 후 rethrow
-      _handleError(uri, e, stackTrace, 'Multipart POST 요청 실패');
-    }
-  }
-
-  /// POST (Multipart) 요청 공통 처리 (웹용 - 바이트 사용)
-  static Future<Map<String, dynamic>> postMultipartBytes(
-    String endpoint,                           // 예: '/upload/excel'
-    Uint8List fileBytes,                       // 업로드할 파일 바이트
-    String fileName, {                         // 서버/로그에 남길 파일명
-    String? logMessage,                        // 로그에 남길 커스텀 메시지
-    Map<String, String>? fields,               // 추가로 전송할 폼 필드 (옵션)
-  }) async {
-    // 처리 흐름: URI 생성 → MultipartRequest 생성(POST, URI) → 파일 추가(file, 파일 바이트, 파일명) 
-    //  → 추가 필드 추가 → 요청 전송 → 응답 검증(200) → JSON 파싱
-    // 에러: 모든 예외는 로깅 후 rethrow
-    // 주의: 웹 플랫폼용 (모바일은 postMultipart 사용)
-
-    // baseUrl + endpoint 로 전체 URI 생성
-    final uri = _buildUri(endpoint);
-
-    LoggerService.debug('API', logMessage ?? 'Multipart POST 요청: $uri');
-
-    try {
-      // MultipartRequest 생성(POST, URI)
-      final request = http.MultipartRequest('POST', uri);
-      // 바이트로 MultipartFile 생성(file, 파일 바이트, 파일명)
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'file',
-          fileBytes,
           filename: fileName,
         ),
       );
@@ -254,7 +200,6 @@ class BaseApiClient {
         try {
           return json.decode(response.body);
         } catch (e) {
-          // 웹에서 JSON 파싱 실패 시 더 명확한 에러 메시지
           LoggerService.error('API', 'JSON 파싱 실패: ${response.body.substring(0, 100)}', e);
           throw Exception('서버 응답을 파싱할 수 없습니다: $e');
         }

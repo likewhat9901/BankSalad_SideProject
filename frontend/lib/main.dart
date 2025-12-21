@@ -1,30 +1,16 @@
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
-import 'core/config/env.dart';
-// kIsWeb : Flutter 앱이 웹에서 실행 중인지 알려주는 상수
-import 'core/config/app_theme.dart';                           // 앱 테마
-import 'core/routing/app_route.dart';                           // 앱 라우트
-import 'core/app_initializer.dart';                           // 앱 초기화
-import 'core/error/error_handler.dart';                        // 전역 에러 핸들러
+import 'core/config/app_theme.dart';                                // 앱 테마
+import 'core/routing/app_route.dart';                               // 앱 라우트
+import 'core/app_initializer.dart';                                 // 앱 초기화
+import 'core/error/error_handler.dart';                             // 전역 에러 핸들러
 
-import 'domains/home/home_screen.dart';                       // 홈 탭 화면
-import 'domains/transaction/transactions_screen.dart';        // 거래내역 탭 화면
-import 'domains/analysis/overspending/overspending_screen.dart';           // 과소비 분석 탭 화면
+import 'domains/home/home_screen.dart';                             // 홈 탭 화면
+import 'domains/transaction/transactions_screen.dart';              // 거래내역 탭 화면
+import 'domains/analysis/overspending/overspending_screen.dart';    // 과소비 분석 탭 화면
+import 'domains/savings/savings_screen.dart';                       // 절약 기회 분석 탭 화면
 
 /// 앱 진입점 (async 필수: Firebase 초기화가 비동기이기 때문)
 void main() async {
-
-  // ========== 브라우저 콘솔 테스트 로그 ==========
-  if (kIsWeb) {
-    print('🚀🚀🚀 앱 시작 - 브라우저 콘솔 테스트 🚀🚀🚀');
-    print('📍 print() 테스트 - 이 메시지가 보이면 print() 작동함');
-    debugPrint('📍 debugPrint() 테스트 - 이 메시지가 보이면 debugPrint() 작동함');
-    print('📍 kIsWeb: $kIsWeb');
-    print('📍 kDebugMode: $kDebugMode');
-    print('📍 Env.environment: ${Env.environment}');
-    print('🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀');
-  }
-
   // Flutter 엔진과 위젯 시스템을 먼저 준비 (비동기 초기화(await Firebase.initializeApp()) 전에 필수)
   // 없으면 크래시 or 알 수 없는 에러
   WidgetsFlutterBinding.ensureInitialized();
@@ -75,9 +61,10 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
   // 각 탭에서 보여줄 화면들 리스트 (const -> 화면 재사용 가능)
   final List<Widget> _screens = const [
-    HomeScreen(),           // 0번 탭: 홈
-    TransactionsScreen(),   // 1번 탭: 거래내역
-    OverspendingScreen(),   // 2번 탭: 과소비 분석
+    HomeScreen(),             // 0번 탭: 홈
+    TransactionsScreen(),     // 1번 탭: 거래내역
+    OverspendingScreen(),     // 2번 탭: 과소비 분석
+    SavingsScreen(),          // 3번 탭: 절약 기회 분석
   ];
 
   @override
@@ -111,6 +98,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
             icon: Icon(Icons.trending_up_outlined), // 과소비 분석 아이콘
             selectedIcon: Icon(Icons.trending_up),   // 선택된 과소비 분석 아이콘
             label: '과소비 분석',                     // 탭 라벨
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.savings_outlined),
+            selectedIcon: Icon(Icons.savings),
+            label: '절약',
           ),
         ],
       ),

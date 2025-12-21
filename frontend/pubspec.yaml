@@ -35,6 +35,7 @@ flutter:
   # 이미지 파일 경로 설정
   assets:
     - assets/images/
+    - assets/images/characters/
 
 # 앱 아이콘 설정
 flutter_launcher_icons:

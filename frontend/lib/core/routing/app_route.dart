@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../domains/auth/login_screen.dart';
 import '../../domains/auth/signup_screen.dart';
 import '../../domains/transaction/transaction.dart';
@@ -8,7 +7,6 @@ import '../../domains/analysis/overspending/overspending_rules_screen.dart';
 import '../../domains/analysis/overspending/overspending_rules_edit_screen.dart';
 import '../../domains/transaction/filtered_transactions_screen.dart';
 import '../logger/logger_service.dart';
-import '../error/error_handler.dart';
 
 class AppRoutes {
   static const String root = '/';
@@ -116,18 +114,6 @@ class AppRoutes {
         e,
         stackTrace,
       );
-      
-      // 웹에서는 콘솔에 상세 정보 출력
-      if (kIsWeb) {
-        ErrorHandler.printWebError(
-          'RoutingError',
-          e.toString(),
-          'app_route.dart',
-          'Route: ${settings.name}, Args: ${settings.arguments}',
-          stackTrace.toString(),
-        );
-      }
-      
       return _error('페이지를 불러올 수 없습니다: $e');
     }
   }

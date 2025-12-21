@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-from app.service.overspending_service import (
+import calendar
+
+from app.service.analysis.overspending_service import (
     analyze_overspending,
     load_overspending_rules,
     save_overspending_rules,
@@ -9,9 +11,9 @@ from app.service.overspending_service import (
     update_overspending_rule,
     delete_overspending_rule,
 )
-from app.service.recurring_service import analyze_recurring
-from app.service.time_analysis_service import analyze_time_based_spending
-import calendar
+from app.service.analysis.recurring_service import analyze_recurring
+from app.service.analysis.time_analysis_service import analyze_time_based_spending
+
 
 analysis_router = APIRouter(prefix="/analysis", tags=["분석"])
 

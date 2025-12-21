@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_picker/file_picker.dart';
 import '../upload_api.dart';
 import '../../../core/logger/logger_service.dart';
@@ -50,26 +49,14 @@ class _ExcelUploadButtonState extends State<ExcelUploadButton> {
       
       setState(() => _isUploading = true);
 
-      // 웹과 모바일 모두 지원
-      if (kIsWeb) {
-        // 웹: bytes 사용
-        if (file.bytes == null) {
-          throw Exception('파일을 읽을 수 없습니다');
-        }
-        await UploadApi.uploadExcelBytes(
-          file.bytes!,
-          file.name,
-        );
-      } else {
-        // 모바일: path 사용
-        if (file.path == null) {
-          throw Exception('파일 경로를 가져올 수 없습니다');
-        }
-        await UploadApi.uploadExcel(
-          file.path!,
-          file.name,
-        );
+      // 파일 경로 검증
+      if (file.path == null) {
+        throw Exception('파일 경로를 가져올 수 없습니다');
       }
+      await UploadApi.uploadExcel(
+        file.path!,
+        file.name,
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

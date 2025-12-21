@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, HTTPException
 from pydantic import BaseModel
 
-from app.service.transaction_service import get_transactions as fetch_tx, update_transaction
+from app.service.data.transaction_service import get_transactions as fetch_tx, update_transaction
 
 
 transactions_router = APIRouter(prefix="/transactions", tags=["거래내역"])

@@ -7,6 +7,8 @@ from app.routers.upload import upload_router
 from app.routers.analysis import analysis_router
 from app.routers.transactions import transactions_router
 from app.routers.stats import stats_router
+from app.routers.savings import savings_router
+from app.routers.personality import personality_router
 
 
 app = FastAPI(
@@ -48,6 +50,8 @@ app.include_router(upload_router)
 app.include_router(analysis_router)
 app.include_router(transactions_router)
 app.include_router(stats_router)
+app.include_router(savings_router)
+app.include_router(personality_router)
 
 # 경로 핸들러
 @app.get("/", response_class=HTMLResponse)

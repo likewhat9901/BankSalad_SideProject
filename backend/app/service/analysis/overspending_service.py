@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 from pathlib import Path
-from config import get_parquet_path
+from config import get_parquet_path, APP_DIR
 from logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -10,9 +10,7 @@ logger = setup_logger(__name__)
 def get_rules_path() -> Path:
     """과소비 규칙 JSON 파일 경로"""
     # app/config/overspending_rules.json
-    current_file = Path(__file__)
-    config_dir = current_file.parent.parent / "config"
-    return config_dir / "overspending_rules.json"
+    return APP_DIR / "config" / "overspending_rules.json"
 
 
 def _convert_time_filter_to_tuple(rule: dict) -> dict:
