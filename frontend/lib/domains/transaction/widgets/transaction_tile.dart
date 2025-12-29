@@ -47,7 +47,7 @@ class TransactionTile extends StatelessWidget {
           ),
         ),
         trailing: Text(
-          CurrencyFormatter.formatWithSign(transaction.amount.abs()),
+          CurrencyFormatter.formatWithSign(transaction.amount),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: isExpense ? Colors.red : Colors.green,

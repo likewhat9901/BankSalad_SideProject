@@ -16,7 +16,7 @@ class AnalysisApi {
     }
 
     final data = await BaseApiClient.get(
-      '/analysis/overspending',
+      '/analysis/patterns',
       queryParams: query.isEmpty ? null : query,
       logMessage: '과소비 분석 API 요청',
     );
@@ -30,7 +30,7 @@ class AnalysisApi {
   /// 과소비 규칙 조회
   static Future<List<Map<String, dynamic>>> getOverspendingRules() async {
     final data = await BaseApiClient.get(
-      '/analysis/rules',
+      '/rules',
       logMessage: '과소비 규칙 조회',
     );
 
@@ -43,7 +43,7 @@ class AnalysisApi {
     List<Map<String, dynamic>> rules,
   ) async {
     await BaseApiClient.put(
-      '/analysis/rules',
+      '/rules',
       {'rules': rules},
       logMessage: '과소비 규칙 수정',
     );
@@ -54,7 +54,7 @@ class AnalysisApi {
     Map<String, dynamic> rule,
   ) async {
     final data = await BaseApiClient.post(
-      '/analysis/rules',
+      '/rules',
       rule,
       logMessage: '과소비 규칙 추가',
     );
@@ -67,7 +67,7 @@ class AnalysisApi {
     Map<String, dynamic> rule,
   ) async {
     final data = await BaseApiClient.put(
-      '/analysis/rules/$ruleId',
+      '/rules/$ruleId',
       rule,
       logMessage: '과소비 규칙 수정',
     );
@@ -77,7 +77,7 @@ class AnalysisApi {
   /// 과소비 규칙 삭제
   static Future<void> deleteOverspendingRule(int ruleId) async {
     await BaseApiClient.delete(
-      '/analysis/rules/$ruleId',
+      '/rules/$ruleId',
       logMessage: '과소비 규칙 삭제',
     );
   }
@@ -120,7 +120,7 @@ class AnalysisApi {
     }
 
     final data = await BaseApiClient.get(
-      '/analysis/time-analysis',
+      '/analysis/time-based',
       queryParams: query.isEmpty ? null : query,
       logMessage: '시간대 소비 분석 API 요청',
     );

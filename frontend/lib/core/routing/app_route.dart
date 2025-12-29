@@ -6,12 +6,14 @@ import '../../domains/transaction/transaction_detail_screen.dart';
 import '../../domains/analysis/overspending/overspending_rules_screen.dart';
 import '../../domains/analysis/overspending/overspending_rules_edit_screen.dart';
 import '../../domains/transaction/filtered_transactions_screen.dart';
+import '../../domains/home/inquiry_screen.dart';
 import '../logger/logger_service.dart';
 
 class AppRoutes {
   static const String root = '/';
   static const String login = '/login';
   static const String signup = '/signup';
+  static const String inquiry = '/inquiry';
   static const String transactionDetail = '/transaction/detail';
   static const String overspendingRules = '/overspending/rules';
   static const String overspendingRuleEdit = '/overspending/rule/edit';
@@ -48,6 +50,9 @@ class AppRoutes {
 
         case signup:
           return _page(const SignupScreen());
+
+        case AppRoutes.inquiry:
+          return _page(const InquiryScreen());
 
         case transactionDetail:
           final args = settings.arguments as Map<String, dynamic>?;

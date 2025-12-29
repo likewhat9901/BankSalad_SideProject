@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/device/app_launcher_service.dart';
 import '../../core/routing/app_route.dart';
 import '../upload/widgets/excel_upload_button.dart';
-import '../personality/spending_personality_api.dart';
-import '../personality/spending_personality.dart';
-import '../personality/widgets/spending_personality_card.dart';
-import '../../core/logger/logger_service.dart';
-import '../../core/widgets/common/loading_widget.dart';
-import '../../core/widgets/common/error_widget.dart';
+
 
 
 class HomeScreen extends StatefulWidget {
@@ -18,21 +14,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  SpendingPersonality? _personality;
-  bool _isLoadingPersonality = false;
-  String? _personalityError;
 
   @override
   void initState() {
     super.initState();
-    _loadPersonality();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('뱅크드레싱'),
+        title: const Text('뱅크드레싱(Beta)'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           _buildLoginButton(context),
@@ -41,56 +33,53 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const SizedBox(height: 64),
-            // 기존 콘텐츠
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildLogo(),
-                  const SizedBox(height: 24),
-                  Text(
-                    '뱅크샐러드 보조도구 입니다.',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('뱅크샐러드 앱에서 엑셀파일을 다운로드 해주세요.'),
-                  const SizedBox(height: 32),
-                  _buildBankSaladButton(),
-                  const SizedBox(height: 16),
-                  ExcelUploadButton(
-                    onUploadSuccess: () {
-                      // 업로드 성공 시 소비 성향 다시 로드
-                      _loadPersonality();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // 소비 성향 카드
-            if (_isLoadingPersonality)
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: LoadingWidget(),
-              )
-            else if (_personalityError != null)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: ErrorStateWidget(
-                  message: _personalityError!,
-                  onRetry: _loadPersonality,
-                ),
-              )
-            else if (_personality != null)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SpendingPersonalityCard(personality: _personality!),
-              ),
+            _buildBody(),
+            
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBody() {
+    return Column(
+      children: [
+        const SizedBox(height: 128),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 로고 위젯
+              _buildLogo(),
+              const SizedBox(height: 24),
+              // 타이틀 위젯
+              Text(
+                '당신의 과소비를 분석하세요.',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              // 설명 위젯
+              const Text('뱅크샐러드 앱에서 엑셀파일을 다운로드 받아 업로드 해주세요.'),
+              const SizedBox(height: 32),
+              // 뱅크샐러드 앱 열기 버튼
+              _buildBankSaladButton(),
+              const SizedBox(height: 16),
+              // 엑셀 파일 업로드 버튼
+              ExcelUploadButton(
+                onUploadSuccess: () {
+                },
+              ),
+              const SizedBox(height: 16),
+              // 문의하기 버튼
+              _buildInquiryButton(),
+              const SizedBox(height: 32),
+              // 개인정보 처리방침 링크
+              _buildPrivacyPolicyLink(),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -145,26 +134,43 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _loadPersonality() async {
-    setState(() {
-      _isLoadingPersonality = true;
-      _personalityError = null;
-    });
+  // 문의하기 버튼 분리
+  Widget _buildInquiryButton() {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.pushNamed(context, AppRoutes.inquiry);
+      },
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.mail_outline, size: 20),
+          SizedBox(width: 8),
+          Text('문의하기'),
+        ],
+      ),
+    );
+  }
 
-    try {
-      final personality = await SpendingPersonalityApi.getSpendingPersonality();
-      if (!mounted) return;
-      setState(() {
-        _personality = personality;
-        _isLoadingPersonality = false;
-      });
-    } catch (e) {
-      LoggerService.error('Home', '소비 성향 로드 실패', e);
-      if (!mounted) return;
-      setState(() {
-        _personalityError = '소비 성향을 불러올 수 없습니다';
-        _isLoadingPersonality = false;
-      });
-    }
+  // 개인정보 처리방침 링크 위젯
+  Widget _buildPrivacyPolicyLink() {
+    return TextButton(
+      onPressed: () async {
+        const url = 'https://thorn-trip-9a5.notion.site/BankDressing-2d805c9cb68b80529fe2d37ec27fc867?source=copy_link';  // 실제 URL로 변경
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      },
+      child: const Text(
+        '개인정보 처리방침',
+        style: TextStyle(
+          color: Colors.grey,
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    );
   }
 }

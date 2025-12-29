@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 /// 카테고리별 아이콘과 색상 맵
 class CategoryIcons {
   static const Map<String, Map<String, dynamic>> icons = {
+    '미분류': {'icon': Icons.help_outline, 'color': Colors.grey},
+    
     // 수입 카테고리
     '급여': {'icon': Icons.account_balance_wallet, 'color': Colors.green},
     '지원금': {'icon': Icons.attach_money, 'color': Colors.green},

@@ -131,34 +131,49 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
   }
 
   Widget _buildCategoryField() {
-    return DropdownButtonFormField<String>(
-      initialValue: _selectedCategory,
-      decoration: const InputDecoration(
-        labelText: '카테고리',
-        border: OutlineInputBorder(),
+    final iconData = CategoryIcons.getIcon(_selectedCategory);
+    
+    return InkWell(
+      onTap: () => _showCategoryPicker(),
+      child: InputDecorator(
+        decoration: const InputDecoration(
+          labelText: '카테고리',
+          border: OutlineInputBorder(),
+        ),
+        child: Row(
+          children: [
+            Icon(iconData['icon'], color: iconData['color'], size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(_selectedCategory)),
+            const Icon(Icons.arrow_drop_down),
+          ],
+        ),
       ),
-      items: _categories.map((category) {
-        final iconData = CategoryIcons.getIcon(category);
-        return DropdownMenuItem(
-          value: category,
-          child: Row(
-            children: [
-              Icon(
-                iconData['icon'],
-                color: iconData['color'],
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(category),
-            ],
-          ),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) {
-          setState(() => _selectedCategory = value);
-        }
-      },
+    );
+  }
+
+  void _showCategoryPicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SizedBox(
+        height: 400,
+        child: ListView.builder(
+          itemCount: _categories.length,
+          itemBuilder: (context, index) {
+            final category = _categories[index];
+            final iconData = CategoryIcons.getIcon(category);
+            return ListTile(
+              leading: Icon(iconData['icon'], color: iconData['color']),
+              title: Text(category),
+              selected: category == _selectedCategory,
+              onTap: () {
+                setState(() => _selectedCategory = category);
+                Navigator.pop(context);
+              },
+            );
+          },
+        ),
+      ),
     );
   }
 

@@ -138,11 +138,6 @@ lib/
   - 백엔드: `uvicorn app.main:app --reload --port 8000`
   - 프론트: `flutter run` (에뮬레이터 or 웹)
 
-- **웹 배포 (Firebase Hosting)**
-  - `flutter build web`
-  - `npx firebase deploy --only hosting`
-  - `firebase.json`의 `"public": "build/web"` 설정 사용
-
 - **Android 배포 (참고)**
   - `flutter build apk --release`
   - `flutter build appbundle --release` (Play Store 용)

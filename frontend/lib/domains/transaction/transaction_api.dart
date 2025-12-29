@@ -9,20 +9,30 @@ class TransactionApi {
     String? category,  // 카테고리 필터 (선택사항)
     String? startDate,  // 시작 날짜 필터 (선택사항, 형식: "YYYY-MM-DD")
     String? endDate,  // 종료 날짜 필터 (선택사항, 형식: "YYYY-MM-DD")
+    String? merchant,  // 상호명 필터 (선택사항)
+    String? paymentMethod,  // 결제수단 필터 (선택사항)
+    String? timeRange,  // 시간대 필터 (선택사항)
+    bool? isWeekend,  // 주말 필터 (선택사항)
+    bool? earlyMonth,  // 월 초 필터 (선택사항)
   }) async {
     // 쿼리 파라미터 맵 생성 (필수 파라미터)
-    final queryParams = <String, String>{
+    final query = <String, String>{
       'limit': limit.toString(),  // 숫자를 문자열로 변환
       'offset': offset.toString(),  // 숫자를 문자열로 변환
     };
     // 선택적 파라미터 추가 (null이 아닐 때만)
-    if (category != null) queryParams['category'] = category;  // 카테고리 필터 추가
-    if (startDate != null) queryParams['start_date'] = startDate;  // 시작 날짜 필터 추가
-    if (endDate != null) queryParams['end_date'] = endDate;  // 종료 날짜 필터 추가
+    if (category != null) query['category'] = category;  // 카테고리 필터 추가
+    if (startDate != null) query['start_date'] = startDate;  // 시작 날짜 필터 추가
+    if (endDate != null) query['end_date'] = endDate;  // 종료 날짜 필터 추가
+    if (merchant != null) query['merchant'] = merchant; // 상호명 필터 추가
+    if (paymentMethod != null) query['payment_method'] = paymentMethod; // 결제수단 필터 추가
+    if (timeRange != null) query['time_range'] = timeRange; // 시간대 필터 추가
+    if (isWeekend == true) query['is_weekend'] = 'true'; // 주말 필터 추가
+    if (earlyMonth == true) query['early_month'] = 'true'; // 월 초 필터 추가
 
     final data = await BaseApiClient.get(
       '/transactions/',
-      queryParams: queryParams,
+      queryParams: query,
       logMessage: '거래내역 조회 API 요청',
     );
 

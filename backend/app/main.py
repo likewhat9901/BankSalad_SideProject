@@ -3,12 +3,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
-from app.routers.upload import upload_router
-from app.routers.analysis import analysis_router
-from app.routers.transactions import transactions_router
-from app.routers.stats import stats_router
-from app.routers.savings import savings_router
-from app.routers.personality import personality_router
+from app.domains.upload.routers.upload import upload_router
+from app.domains.overspending.routers.analysis_router import analysis_router
+from app.domains.overspending.routers.rule_router import rule_router
+from app.domains.transaction.routers.transactions import transactions_router
+from app.domains.statistic.routers.stats import stats_router
+from app.domains.saving.routers.savings import savings_router
+from app.domains.personality.routers.personality_router import personality_router
+from app.domains.inquiry.routers.inquiry_router import inquiry_router
+
+from app.common.exceptions import setup_exception_handlers
 
 
 app = FastAPI(
@@ -17,23 +21,24 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# 예외 핸들러 등록
+setup_exception_handlers(app)
+
 # 환경 변수에서 허용할 origin 가져오기
 ALLOWED_ORIGINS_ENV = os.getenv("ALLOWED_ORIGINS", "")
 if ALLOWED_ORIGINS_ENV:
     # 환경 변수가 있으면 콤마로 분리
     ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_ENV.split(",")]
-    localhost_origins = [
-        "http://localhost:10429",
-        "http://localhost:8000",
-        "http://127.0.0.1:10429",
-        "http://127.0.0.1:8000",
-    ]
-    for origin in localhost_origins:
-        if origin not in ALLOWED_ORIGINS:
-            ALLOWED_ORIGINS.append(origin)
 else:
-    # 환경 변수가 없으면 기본값 (개발용)
-    ALLOWED_ORIGINS = ["*"]
+    # 개발 환경에서만 전체 허용
+    import sys
+    if "uvicorn" in sys.argv[0] and "--reload" in sys.argv:
+        ALLOWED_ORIGINS = ["*"]
+    else:
+        # 프로덕션 기본값
+        ALLOWED_ORIGINS = [
+            "https://banksalad-backend.up.railway.app",
+        ]
 
 # Flutter 앱에서 호출할 수 있도록 CORS 설정
 app.add_middleware(
@@ -48,10 +53,12 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(upload_router)
 app.include_router(analysis_router)
+app.include_router(rule_router)
 app.include_router(transactions_router)
 app.include_router(stats_router)
 app.include_router(savings_router)
 app.include_router(personality_router)
+app.include_router(inquiry_router)
 
 # 경로 핸들러
 @app.get("/", response_class=HTMLResponse)

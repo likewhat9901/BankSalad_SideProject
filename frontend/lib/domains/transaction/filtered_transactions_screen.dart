@@ -84,45 +84,23 @@ class _FilteredTransactionsScreenState extends State<FilteredTransactionsScreen>
     });
 
     try {
+      // 👇 백엔드에서 모든 필터링 처리!
       final result = await TransactionApi.getTransactionsPaginated(
-        limit: 1000,  // 충분히 큰 값
+        limit: 1000,
         offset: 0,
         category: widget.filters['category'] as String?,
         startDate: widget.filters['start_date'] as String?,
         endDate: widget.filters['end_date'] as String?,
+        merchant: widget.filters['merchant'] as String?,
+        paymentMethod: widget.filters['payment_method'] as String?,
+        timeRange: widget.filters['time_range'] as String?,
+        isWeekend: widget.filters['is_weekend'] as bool?,
+        earlyMonth: widget.filters['early_month'] as bool?,
       );
 
-      List<Transaction> transactions = result['transactions'] as List<Transaction>;
-
-      // 추가 필터링 (프론트엔드에서)
-      if (widget.filters['merchant'] != null) {
-        final merchant = widget.filters['merchant'] as String;
-        transactions = transactions.where((t) => t.description.contains(merchant)).toList();
-      }
-
-      if (widget.filters['payment_method'] != null) {
-        final paymentMethod = widget.filters['payment_method'] as String;
-        transactions = transactions.where((t) => t.paymentMethod == paymentMethod).toList();
-      }
-
-      // 시간대 필터링 (시간 파싱 필요)
-      if (widget.filters['time_range'] != null) {
-        final timeRange = widget.filters['time_range'] as String;
-        transactions = _filterByTimeRange(transactions, timeRange);
-      }
-
-      // 주말 필터링
-      if (widget.filters['is_weekend'] == true) {
-        transactions = _filterWeekend(transactions);
-      }
-
-      // 월 초 필터링
-      if (widget.filters['early_month'] == true) {
-        transactions = _filterEarlyMonth(transactions);
-      }
-
+      // 프론트엔드 필터링 코드 삭제! 백엔드에서 정렬된 상태로 옴
       setState(() {
-        _transactions = transactions;
+        _transactions = result['transactions'] as List<Transaction>;
         _isLoading = false;
       });
     } catch (e) {
@@ -134,54 +112,4 @@ class _FilteredTransactionsScreenState extends State<FilteredTransactionsScreen>
     }
   }
 
-  List<Transaction> _filterByTimeRange(List<Transaction> transactions, String timeRange) {
-    // "18:00-22:00" 형식 파싱
-    final parts = timeRange.split('-');
-    if (parts.length != 2) return transactions;
-
-    final startHour = int.tryParse(parts[0].split(':')[0]);
-    final endHour = int.tryParse(parts[1].split(':')[0]);
-    if (startHour == null || endHour == null) return transactions;
-
-    return transactions.where((t) {
-      try {
-        final dateTime = DateTime.parse(t.date);
-        final hour = dateTime.hour;
-        
-        if (startHour < endHour) {
-          return hour >= startHour && hour < endHour;
-        } else {
-          // 야간 시간대 (22시~02시)
-          return hour >= startHour || hour < endHour;
-        }
-      } catch (e) {
-        return false;
-      }
-    }).toList();
-  }
-
-  List<Transaction> _filterWeekend(List<Transaction> transactions) {
-    return transactions.where((t) {
-      try {
-        final dateTime = DateTime.parse(t.date);
-        final dayOfWeek = dateTime.weekday;
-        return dayOfWeek == 6 || dayOfWeek == 7;  // 토, 일
-      } catch (e) {
-        return false;
-      }
-    }).toList();
-  }
-
-  List<Transaction> _filterEarlyMonth(List<Transaction> transactions) {
-    return transactions.where((t) {
-      try {
-        final dateTime = DateTime.parse(t.date);
-        return dateTime.day <= 5;
-      } catch (e) {
-        return false;
-      }
-    }).toList();
-  }
-
-  
 }

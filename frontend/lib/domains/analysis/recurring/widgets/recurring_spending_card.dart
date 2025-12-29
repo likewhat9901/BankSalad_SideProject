@@ -29,7 +29,23 @@ class RecurringSpendingCard extends StatelessWidget {
     }
 
     if (patterns.isEmpty) {
-      return const SizedBox.shrink();
+      return Card(
+        elevation: 4,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Icon(Icons.repeat, color: Colors.grey.shade400, size: 40),
+              const SizedBox(height: 8),
+              Text(
+                '반복 소비 패턴이 없습니다',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return Card(

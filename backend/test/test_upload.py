@@ -1,5 +1,5 @@
 """업로드 서비스 테스트"""
-from app.service.upload_service import excel_to_parquet
+from app.domains.upload.services import excel_to_parquet
 from config import get_parquet_path
 
 class TestUploadService:

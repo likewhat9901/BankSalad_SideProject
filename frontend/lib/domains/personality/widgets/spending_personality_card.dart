@@ -17,58 +17,61 @@ class SpendingPersonalityCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),  // 20 → 16
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 캐릭터 아이콘 또는 이미지
-            personality.characterImage != null && personality.characterImage!.isNotEmpty
-            ? Image.asset(
-                personality.characterImage!,
-                width: 120,
-                height: 120,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  // 이미지 로드 실패 시 default 이미지 표시
-                  return Text(
-                    personality.characterIcon,
-                    style: const TextStyle(fontSize: 80),
-                  );
-                },
-              )
-            : Text(
-                personality.characterIcon,
-                style: const TextStyle(fontSize: 80),
-              ),
-            
-            // 유형 이름
-            Text(
-              personality.name,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            
-            // 유형 코드
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                personality.type,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade700,
-                  letterSpacing: 2,
+            // 캐릭터 + 유형 이름을 가로로 배치
+            Row(
+              children: [
+                // 캐릭터 아이콘 (작게)
+                personality.characterImage != null && personality.characterImage!.isNotEmpty
+                  ? Image.asset(
+                      personality.characterImage!,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Text(
+                          personality.characterIcon,
+                          style: const TextStyle(fontSize: 60),
+                        );
+                      },
+                    )
+                  : Text(
+                      personality.characterIcon,
+                      style: const TextStyle(fontSize: 60),
+                    ),
+                const SizedBox(width: 20),
+                
+                // 이름 + 유형 코드 (세로)
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        personality.name,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        personality.type,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),  // 16 → 12
             
             // 설명
             Text(
@@ -79,43 +82,45 @@ class SpendingPersonalityCard extends StatelessWidget {
                 color: Colors.grey.shade700,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
-            // 특성 태그
+            // 특성 태그 (유지하되 간격 축소)
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               alignment: WrapAlignment.center,
               children: personality.traits.map((trait) {
                 return Chip(
-                  label: Text(trait),
+                  label: Text(trait, style: const TextStyle(fontSize: 12)),
                   backgroundColor: Colors.blue.shade50,
                   labelStyle: TextStyle(
                     color: Colors.blue.shade700,
                     fontWeight: FontWeight.w500,
                   ),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 );
               }).toList(),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
-            // 조언
+            // 조언 (축소)
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.green.shade200),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lightbulb, color: Colors.green.shade700, size: 20),
+                  Icon(Icons.lightbulb, color: Colors.green.shade700, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       personality.advice,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: Colors.green.shade900,
                       ),
                     ),
@@ -123,10 +128,7 @@ class SpendingPersonalityCard extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            
-            // 점수 바
-            _buildScoresSection(),
+            // 상세 점수 섹션 제거 또는 ExpansionTile로 접기
           ],
         ),
       ),

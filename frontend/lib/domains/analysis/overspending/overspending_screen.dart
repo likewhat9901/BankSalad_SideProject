@@ -14,6 +14,9 @@ import '../recurring/recurring_spending_pattern.dart';
 import '../recurring/widgets/recurring_spending_card.dart';
 import '../time_analysis/time_spending_pattern.dart';
 import '../time_analysis/widgets/time_spending_card.dart';
+import '../../personality/spending_personality_api.dart';
+import '../../personality/spending_personality.dart';
+import '../../personality/widgets/spending_personality_card.dart';
 
 class OverspendingScreen extends StatefulWidget {
   const OverspendingScreen({super.key});
@@ -42,6 +45,10 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
   List<TimeSpendingPattern> _timePatterns = [];
   bool _isTimeAnalysisLoading = false;
 
+  // 소비 성향 데이터
+  SpendingPersonality? _personality;
+  bool _isLoadingPersonality = false;
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +56,7 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
     _loadTrend();
     _loadRecurringPatterns();
     _loadTimeAnalysis();
+    _loadPersonality();
   }
 
   @override
@@ -130,6 +138,13 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 소비 성향 카드
+        _buildPersonalityCard(),
+        const SizedBox(height: 20),
+        // 과소비 요약 카드
+        OverspendingSummaryCard(patterns: patterns),
+        const SizedBox(height: 20),
+        // 과소비 추이 카드
         OverspendingTrendCard(
           trend: _trend,
           isLoading: _isTrendLoading,
@@ -137,13 +152,13 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
           onPeriodChanged: _onTrendPeriodChanged,
         ),
         const SizedBox(height: 20),
-        OverspendingSummaryCard(patterns: patterns),
-        const SizedBox(height: 20),
+        // 과소비 패턴 리스트 카드
         OverspendingPatternList(
           patterns: patterns,
           onSettingsPressed: _handleSettingsPressed,
         ),
         const SizedBox(height: 20),
+        // 반복 소비 패턴 카드
         RecurringSpendingCard(
           patterns: _recurringPatterns,
           isLoading: _isRecurringLoading,
@@ -195,6 +210,33 @@ class _OverspendingScreenState extends State<OverspendingScreen> {
   }
 
   // ========== 비즈니스 로직 ==========
+
+  // 소비 성향 로드 함수
+  Future<void> _loadPersonality() async {
+    setState(() => _isLoadingPersonality = true);
+    try {
+      final personality = await SpendingPersonalityApi.getSpendingPersonality();
+      if (!mounted) return;
+      setState(() {
+        _personality = personality;
+        _isLoadingPersonality = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingPersonality = false);
+    }
+  }
+
+  // 소비 성향 카드 빌드
+  Widget _buildPersonalityCard() {
+    if (_isLoadingPersonality) {
+      return const LoadingWidget();
+    }
+    if (_personality == null) {
+      return const SizedBox.shrink();
+    }
+    return SpendingPersonalityCard(personality: _personality!);
+  }
 
   // 과소비 데이터 로드
   Future<void> _loadData() async {
